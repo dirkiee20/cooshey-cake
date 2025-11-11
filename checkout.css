@@ -1,0 +1,189 @@
+/* === CHECKOUT PAGE STYLES === */
+
+.checkout__container {
+    display: grid;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+    .checkout__container {
+        grid-template-columns: 1.5fr 1fr;
+    }
+}
+
+.checkout__form,
+.checkout__summary {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.checkout__form h3,
+.checkout__summary h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--extra-light);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.btn--place-order {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+/* === Order Summary Item Styles === */
+#order-summary-items {
+    margin-bottom: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--extra-light);
+}
+
+.summary-item:last-of-type {
+    border-bottom: none;
+}
+
+.summary-item__image {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    flex-shrink: 0;
+    border: 1px solid var(--extra-light);
+}
+
+.summary-item__details {
+    display: flex;
+    justify-content: space-between;
+    flex-grow: 1;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-item__details span:first-child {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.summary-item__price {
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+}
+
+.summary__details p {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+}
+
+.summary__details p.total {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-top: 1rem;
+    border-top: 1px solid var(--extra-light);
+    padding-top: 1rem;
+}
+
+/* === Payment Info Box Styles === */
+.payment-info-box {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.payment-info-box p {
+    margin-bottom: 0.8rem;
+    color: var(--text-dark);
+}
+
+.payment-info-box p:last-child {
+    margin-bottom: 0;
+}
+
+.account-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.account-display span {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    flex-grow: 1;
+    letter-spacing: 1px;
+}
+
+.btn-copy {
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.3s ease;
+}
+
+.btn-copy:hover {
+    background: var(--primary-color-dark, #8b4513);
+}
+
+.account-name {
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    margin: 0.5rem 0;
+}
+
+.payment-instruction {
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+    line-height: 1.5;
+}

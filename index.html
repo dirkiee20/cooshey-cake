@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="stylesheet" href="styles.css" />
+    <title>Cooshey Cake n' arts</title>
+  </head>
+  <body>
+    <nav>
+      <div class="nav__header">
+        <div class="nav__logo">
+  <a href="index.html">
+    <img src="assets/logo.png" alt="coosheyCake Logo" class="logo" />
+  </a>
+</div>
+        <div class="nav__menu__btn" id="menu-btn">
+          <i class="ri-menu-3-line"></i>
+        </div>
+      </div>
+      <ul class="nav__links" id="nav-links">  
+        <li><a href="#home">Home</a></li>
+        <li><a href="#popular-cakes">Popular</a></li>
+        <li><a href="#most-selling">Best Sellers</a></li>
+        <li><a href="#main-products">Main Products</a></li>
+        <li><a href="#contact">Contact Us</a></li>  
+      </ul>
+      <div class="nav__btns">
+        <!-- This button will be shown to logged-out users -->
+        <button class="btn" id="login-popup-btn">Sign In</button>
+
+        <!-- This dropdown will be shown to logged-in users -->
+        <div class="user-dropdown" id="user-dropdown" style="display: none;">
+          <button class="user-dropdown-toggle" id="user-dropdown-toggle">
+            <span id="user-name"></span> <i class="ri-arrow-down-s-line"></i>
+          </button>
+          <div class="user-dropdown-menu" id="user-dropdown-menu">
+            <a href="/admin/index.html" id="admin-dashboard-link" style="display: none;">Admin Dashboard</a>
+            <a href="#" id="my-orders-link">My Orders</a>
+            <a href="#" id="logout-btn">Logout</a>
+          </div>
+        </div>
+
+        <a href="cart.html" class="btn"><i class="ri-shopping-cart-line"></i></a>
+        <button class="btn" id="notification-btn"><i class="ri-notification-3-fill"></i></button>
+      </div>
+    </nav>
+
+    <header id="home">
+      <div class="header__image">
+        <img src="assets/header2.png" alt="header" />
+      </div>
+      <div class="header__content">
+        <h1>WELCOME TO <span>COOSHEY CAKES</span> WORLD</h1>
+        <p class="section__description">
+          Experience the sweetness of Cooshey Cakes – soft, moist, and baked to perfection. Each bite is a harmony of rich flavors and comforting goodness, crafted to make every occasion extra special. Whether you’re treating yourself or sharing with loved ones, Cooshey Cakes bring the perfect balance of indulgence and happiness.
+        </p>
+        <div class="header__btn">
+          <a href="#categories" class="btn">Buy Now</a>
+          <a href="#categories" class="scroll-down-arrow" aria-label="Scroll to categories">
+            <i class="ri-arrow-down-s-line"></i>
+          </a>
+        </div>
+        <ul class="socials">
+          <li>
+            <a href="#"><i class="ri-facebook-fill"></i></a>
+          </li>
+          <li>
+            <a href="#"><i class="ri-twitter-fill"></i></a>
+          </li>
+          <li>
+            <a href="#"><i class="ri-pinterest-line"></i></a>
+          </li>
+          <li>
+            <a href="#"><i class="ri-phone-fill"></i></a>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <section class="section__container popular__container" id="popular-cakes">
+      <h2 class="section__header">Popular Cooshey-Cake</h2>
+      <div class="popular__grid">
+        <!-- Popular cakes will be loaded here dynamically -->
+      </div>
+    </section>
+
+    <section class="section__container discover__container" id="most-selling">
+      <h2 class="section__header">Most Selling Cooshey-cake</h2>
+      <p class="section__description">
+        Discover our crowd favorites! These cakes are loved by everyone and have become the top picks for their soft, moist texture and irresistible flavors that make every bite a delight.
+      </p>
+      <div class="discover__grid">
+        <!-- Best-selling cakes will be loaded here dynamically -->
+      </div>
+    </section>
+
+    <section class="section__container" id="main-products">
+      <h2 class="section__header">Our Main Products</h2>
+      <div class="main-product__grid">
+        <!-- Main products will be loaded here dynamically -->
+      </div>
+    </section>
+
+    <section class="banner">
+      <div class="banner__image"></div>
+      <div class="banner__content">
+        <h2 class="section__header">
+          Tulip Boucake
+        </h2>
+        <p class="section__description">
+          A stunning arrangement of delicate tulip-shaped cupcakes designed to look like a blooming bouquet. 
+          Each cupcake is carefully frosted with vibrant buttercream petals in pastel shades, making it not only a 
+          delicious treat but also a beautiful gift for birthdays, anniversaries, or any special occasion.
+        </p>
+        <div class="banner__flex">
+          <div class="banner__card">
+            <img src="assets/banner-1.png" alt="banner" />
+            <h4>Fresh & Natural</h4>
+          </div>
+          <div class="banner__card">
+            <img src="assets/banner-2.png" alt="banner" />
+            <h4>Quick Packaging</h4>
+          </div>
+          <div class="banner__card">
+            <img src="assets/banner-3.png" alt="banner" />
+            <h4>Fast Delivery</h4>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="notification-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2 class="section__header">Subscribe For Discounts</h2>
+        <p class="section__description">
+          Don't miss out on sweet deals! Subscribe now to receive exclusive
+          discounts and updates on our latest ice cream flavors and special
+          offers.
+        </p>
+        <form action="/">
+          <input type="email" placeholder="Type Your Email" required />
+          <button class="btn">Subscribe</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Login/Register Modal -->
+    <div id="login-register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="login-form-container">
+                <h2>Login</h2>
+                <form id="login-form">
+                    <input type="email" id="login-email" placeholder="Email" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button type="submit" class="btn">Login</button>
+                    <p>Don't have an account? <a href="#" id="show-register-form">Register</a></p>
+                </form>
+            </div>
+            <div id="register-form-container" style="display: none;">
+                <h2>Register</h2>
+                <form id="register-form">
+                    <input type="text" id="register-name" placeholder="Name" required>
+                    <input type="email" id="register-email" placeholder="Email" required>
+                    <input type="password" id="register-password" placeholder="Password" required>
+                    <button type="submit" class="btn">Register</button>
+                    <p>Already have an account? <a href="#" id="show-login-form">Login</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Product Modal -->
+    <div id="view-product-modal" class="modal">
+      <div class="modal-content view-product-modal-content">
+        <span class="close-btn">&times;</span>
+        <div class="view-product__container">
+          <div class="view-product__image">
+            <img id="view-product-image" src="" alt="Product Image" />
+          </div>
+          <div class="view-product__details">
+            <h2 id="view-product-name">Product Name</h2>
+            <p id="view-product-description">Full product description goes here...</p>
+            <div class="view-product__stock-status">
+              <span id="view-product-stock"></span>
+            </div>
+            <h3 id="view-product-price" class="price">₱0.00</h3>
+            <div class="view-product__quantity" style="display: none;">
+              <label for="view-product-quantity-input">Quantity:</label>
+              <div class="quantity-stepper">
+                <button type="button" class="quantity-btn" id="view-product-quantity-minus" aria-label="Decrement quantity">-</button>
+                <input type="text" id="view-product-quantity-input" name="quantity" value="1" min="1" readonly aria-live="polite" />
+                <button type="button" class="quantity-btn" id="view-product-quantity-plus" aria-label="Increment quantity">+</button>
+              </div>
+            </div>
+            <div class="view-product__actions">
+              <button id="view-product-add-to-cart" class="btn add-to-cart-btn" style="display: none;">Add to Cart</button>
+              <button id="view-product-reserve-now" class="btn btn-buy-now" style="display: none;">Reserve Now</button>
+              <button id="view-product-pre-order" class="btn btn-pre-order" style="display: none;">Pre-order</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer id="contact">
+      <div class="section__container footer__container">
+        <div class="footer__col">
+          <a href="#" class="logo">CoosheyCake <span>n' Arts</span></a>
+        </div>
+        <div class="footer__col">
+          <ul class="footer__links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#popular-cakes">Popular</a></li>
+            <li><a href="#most-selling">Best Sellers</a></li>
+            <li><a href="#contact">Contact Us</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <ul class="socials">
+            <li>
+              <a href="#"><i class="ri-facebook-fill"></i></a>
+            </li>
+            <li>
+              <a href="#"><i class="ri-twitter-fill"></i></a>
+            </li>
+            <li>
+              <a href="#"><i class="ri-pinterest-line"></i></a>
+            </li>
+            <li>
+              <a href="#"><i class="ri-phone-fill"></i></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bar">
+        Copyright © 2025. All rights reserved.
+      </div>
+    </footer>
+
+    <script src="https://unpkg.com/scrollreveal"></script>
+    <script src="main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,126 @@
+/* Customers Tab Specific Styles */
+
+/* Customers Table Container */
+.customers-table-container {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+/* Customers Table */
+.customers-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.customers-table thead {
+    background: var(--gray-50);
+}
+
+.customers-table th,
+.customers-table td {
+    padding: var(--spacing-lg);
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.customers-table th {
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.customers-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+.customers-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Customer Name */
+.customers-table td:first-child {
+    font-weight: 500;
+    color: var(--gray-900);
+}
+
+/* Customer Email */
+.customers-table td:nth-child(2) {
+    color: var(--gray-700);
+}
+
+/* Status Badge */
+.status-badge {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-lg);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+    background: var(--success);
+    color: var(--white);
+}
+
+.status-badge.inactive {
+    background: var(--gray-400);
+    color: var(--white);
+}
+
+/* Join Date */
+.customers-table td:nth-child(4) {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+}
+
+/* Actions */
+.customers-table td:last-child {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .customers-table-container {
+        overflow-x: auto;
+    }
+
+    .customers-table {
+        min-width: 800px;
+    }
+}
+
+@media (max-width: 768px) {
+    .customers-table th,
+    .customers-table td {
+        padding: var(--spacing-md);
+        font-size: 0.9rem;
+    }
+
+    .customers-table th {
+        font-size: 0.8rem;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 2px var(--spacing-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    .customers-table th:nth-child(4),
+    .customers-table td:nth-child(4) {
+        display: none;
+    }
+
+    .customers-table th,
+    .customers-table td {
+        padding: var(--spacing-sm);
+    }
+}

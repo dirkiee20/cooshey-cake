@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="checkout.css" />
+    <title>Checkout | Cooshey Cake n' arts</title>
+    <style>
+      /* === RELEVANT BASE STYLES === */
+      html, body {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        background: #f2f5fa;
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+
+      /* === SECTION CONTAINER OVERRIDE FOR CHECKOUT === */
+      .section__container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      .checkout__container.section__container {
+        max-width: none;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+        /* Retain some vertical padding for aesthetics */
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        box-sizing: border-box;
+      }
+
+      /* === CHECKOUT PAGE STYLES === */
+      .checkout__container {
+        display: grid;
+        gap: 2rem;
+        align-items: start;
+        width: 100%;
+      }
+      @media (min-width: 768px) {
+        .checkout__container {
+          grid-template-columns: 1.5fr 1fr;
+          padding-left: 3vw;
+          padding-right: 3vw;
+        }
+      }
+
+      .checkout__form,
+      .checkout__summary {
+        background: var(--white, #fff);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        transition: box-shadow 0.3s;
+      }
+
+      .checkout__form:hover,
+      .checkout__summary:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+      }
+
+      .checkout__form h3,
+      .checkout__summary h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-dark, #1a1a1a);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--extra-light, #ececec);
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark, #1a1a1a);
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: var(--primary-color, #20c997);
+        box-shadow: 0 0 5px var(--primary-color, #20c997);
+      }
+
+      .btn--place-order {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-top: 1rem;
+        border-radius: 8px;
+        background-color: var(--primary-color, #20c997);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .btn--place-order:hover {
+        background-color: var(--primary-color-dark, #12a483);
+      }
+
+      /* === Order Summary Item Styles === */
+      #order-summary-items {
+        margin-bottom: 1.5rem;
+      }
+
+      .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--extra-light, #ececec);
+      }
+
+      .summary-item:last-of-type {
+        border-bottom: none;
+      }
+
+      .summary-item__image {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        flex-shrink: 0;
+        border: 1px solid var(--extra-light, #ececec);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      }
+
+      .summary-item__details {
+        display: flex;
+        justify-content: space-between;
+        flex-grow: 1;
+        align-items: center;
+        gap: 1rem;
+      }
+      .summary-item__details span:first-child {
+        font-weight: 500;
+        color: var(--text-dark, #1a1a1a);
+      }
+
+      .summary-item__price {
+        font-weight: 600;
+        color: var(--text-dark, #1a1a1a);
+        white-space: nowrap;
+      }
+
+      .summary__details p {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
+      }
+      .summary__details p.total {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--primary-color, #20c997);
+        margin-top: 1rem;
+        border-top: 1px solid var(--extra-light, #ececec);
+        padding-top: 1rem;
+      }
+
+      /* === Payment Info Box Styles === */
+      .payment-info-box {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 2px solid var(--primary-color, #20c997);
+        margin-bottom: 1.5rem;
+      }
+
+      .payment-info-box p {
+        margin-bottom: 0.8rem;
+        color: var(--text-dark, #1a1a1a);
+      }
+      .payment-info-box p:last-child {
+        margin-bottom: 0;
+      }
+
+      .account-display {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      }
+
+      .account-display span {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary-color, #20c997);
+        flex-grow: 1;
+        letter-spacing: 1px;
+      }
+
+      .btn-copy {
+        padding: 0.5rem 1rem;
+        background: var(--primary-color, #20c997);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background 0.3s;
+      }
+      .btn-copy:hover {
+        background: var(--primary-color-dark, #12a483);
+      }
+
+      .account-name {
+        font-size: 0.95rem;
+        color: var(--text-dark, #1a1a1a);
+        margin: 0.5rem 0;
+      }
+      .payment-instruction {
+        font-size: 0.9rem;
+        color: #666;
+        font-style: italic;
+        line-height: 1.5;
+      }
+
+      /* Accessibility enhancements */
+      .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0,0,0,0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+      }
+
+      /* Header and Footer Stretches Full Width */
+      .cart-page-header, .footer__container {
+        width: 100vw;
+        box-sizing: border-box;
+      }
+      .cart-page-header {
+        background: transparent;
+        padding: 1rem 2vw;
+      }
+      .footer__container {
+        background: #f8f9fa;
+        margin-top: 2rem;
+        padding: 1rem 2vw;
+      }
+      .footer__bar {
+        text-align: center;
+        color: #888;
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cart-page-header">
+      <a href="cart.html" class="btn btn--back"><i class="ri-arrow-left-line"></i> Back to Cart</a>
+    </div>
+
+    <header class="section__container cart__header">
+      <h2 class="section__header">Checkout</h2>
+      <p class="section__description">
+        Please fill in your details to complete your order.
+      </p>
+    </header>
+
+    <section class="section__container checkout__container">
+      <div class="checkout__form">
+        <form id="checkout-form">
+          <h3>Shipping Information</h3>
+          <div class="form-group">
+            <label for="address">Address</label>
+            <input type="text" id="address" required />
+          </div>
+          <div class="form-group">
+            <label for="contact">Contact Number</label>
+            <input type="tel" id="contact" required />
+          </div>
+
+          <h3>Payment Information</h3>
+          <div class="payment-info-box">
+            <p><strong>Account Number:</strong></p>
+            <div class="account-display">
+              <span id="account-number">09123456789</span>
+              <button type="button" class="btn-copy" onclick="copyAccountNumber()">
+                <i class="ri-file-copy-line"></i> Copy
+              </button>
+            </div>
+            <p class="account-name"><strong>Account Name:</strong> Cooshey Cake n' Arts</p>
+            <p class="payment-instruction">Send the exact amount shown in the order summary to this account number, then upload your receipt on the next page.</p>
+          </div>
+
+          <button type="button" id="place-order-button" class="btn btn--primary btn--place-order">Place Order & Upload Receipt</button>
+        </form>
+      </div>
+      <div class="checkout__summary">
+        <h3>Order Summary</h3>
+        <div id="order-summary-items">
+          <!-- Order summary items will be dynamically inserted here -->
+        </div>
+        <div class="summary__details">
+          <p>Subtotal: <span id="subtotal">₱0.00</span></p>
+          <p>Taxes (10%): <span id="taxes">₱0.00</span></p>
+          <p class="total">Total: <span id="total">₱0.00</span></p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer__container">
+      <div class="footer__bar">
+        Copyright © 2025 Web Design Mastery. All rights reserved.
+      </div>
+    </footer>
+
+    <script src="checkout.js"></script>
+    <script>
+      // Example copy button script
+      function copyAccountNumber() {
+        const text = document.getElementById('account-number').textContent;
+        navigator.clipboard.writeText(text);
+        alert('Account number copied!');
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+<!-- Dashboard Tab Content -->
+<section class="dashboard-section active" id="dashboardSection">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Revenue</h3>
+                <p class="stat-value" id="totalRevenue">₱0.00</p>
+                <span class="stat-change positive" id="revenueChange">
+                    <i class="fas fa-arrow-up"></i> +12.5%
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Orders</h3>
+                <p class="stat-value" id="totalOrders">0</p>
+                <span class="stat-change positive" id="ordersChange">
+                    <i class="fas fa-arrow-up"></i> +8.2%
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Products Sold</h3>
+                <p class="stat-value" id="productsSold">0</p>
+                <span class="stat-change positive" id="productsChange">
+                    <i class="fas fa-arrow-up"></i> +15.3%
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Customers</h3>
+                <p class="stat-value" id="totalCustomers">0</p>
+                <span class="stat-change positive" id="customersChange">
+                    <i class="fas fa-arrow-up"></i> +5.7%
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-section">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Sales Overview</h3>
+                <div class="chart-controls">
+                    <button class="chart-btn active" data-period="7d">7D</button>
+                    <button class="chart-btn" data-period="30d">30D</button>
+                    <button class="chart-btn" data-period="90d">90D</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Top Products</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="productsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="recent-activity">
+        <div class="activity-header">
+            <h3>Recent Activity</h3>
+            <button class="view-all-btn">View All</button>
+        </div>
+        <div class="activity-list" id="activityList">
+            <!-- Activity items will be loaded here -->
+        </div>
+    </div>
+</section>

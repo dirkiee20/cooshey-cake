@@ -1,0 +1,61 @@
+<!-- Payments Tab Content -->
+<section class="payments-section" id="paymentsSection">
+    <div class="section-header">
+        <div class="header-left">
+            <h2><i class="fas fa-credit-card"></i> Payment Management</h2>
+            <p>Review and confirm customer payment proofs</p>
+        </div>
+        <div class="header-right">
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="pendingCount">0</span>
+                        <span class="stat-label">Pending</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon confirmed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="confirmedCount">0</span>
+                        <span class="stat-label">Confirmed</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon rejected">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="rejectedCount">0</span>
+                        <span class="stat-label">Rejected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="payments-controls">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All Payments</button>
+            <button class="filter-tab" data-filter="pending">Pending</button>
+            <button class="filter-tab" data-filter="confirmed">Confirmed</button>
+            <button class="filter-tab" data-filter="rejected">Rejected</button>
+        </div>
+
+        <div class="search-filter">
+            <div class="search-input">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search by order ID..." id="paymentSearch">
+            </div>
+        </div>
+    </div>
+
+    <div class="payments-grid" id="paymentsGrid">
+        <!-- Payments will be loaded here -->
+        <div class="loading-spinner">Loading payments...</div>
+    </div>
+</section>
