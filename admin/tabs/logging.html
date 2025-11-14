@@ -1,0 +1,75 @@
+<!-- Logging Tab Content -->
+<section class="logging-section" id="loggingSection">
+    <div class="section-header">
+        <div class="header-left">
+            <h2><i class="fas fa-history"></i> Admin Activity Log</h2>
+            <p>Track all admin actions and system activities</p>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-secondary" id="refreshLogsBtn" aria-label="Refresh logs">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="logging-controls">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All Activities</button>
+            <button class="filter-tab" data-filter="product">Products</button>
+            <button class="filter-tab" data-filter="payment">Payments</button>
+            <button class="filter-tab" data-filter="order">Orders</button>
+            <button class="filter-tab" data-filter="user">Users</button>
+        </div>
+
+        <div class="search-filter">
+            <div class="search-input">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search logs..." id="logSearch">
+            </div>
+            <select class="filter-select" id="actionFilter">
+                <option value="">All Actions</option>
+                <option value="create">Create</option>
+                <option value="update">Update</option>
+                <option value="delete">Delete</option>
+                <option value="confirm">Confirm</option>
+                <option value="reject">Reject</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="orders-table-container">
+        <table class="data-table" id="loggingTable">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Admin</th>
+                    <th>Action</th>
+                    <th>Entity Type</th>
+                    <th>Entity Name</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="loggingTableBody">
+                <!-- Logs will be loaded here -->
+                <tr>
+                    <td colspan="6" class="loading-row">
+                        <div class="loading-spinner">Loading logs...</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-container" id="paginationContainer" style="display: none;">
+        <div class="pagination-info" id="paginationInfo"></div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary" id="prevPageBtn" disabled>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <span class="page-numbers" id="pageNumbers"></span>
+            <button class="btn btn-secondary" id="nextPageBtn" disabled>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</section>

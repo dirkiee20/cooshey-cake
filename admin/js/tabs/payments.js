@@ -12,6 +12,8 @@
     // Initialize payments tab
     function init() {
         console.log('PaymentsTab: Initializing payments tab');
+        console.log('PaymentsTab: Window object available:', !!window);
+        console.log('PaymentsTab: AdminAPI available:', !!window.AdminAPI);
         bindEvents();
         loadData();
     }
@@ -42,11 +44,15 @@
             console.log('PaymentsTab: Loading payments data');
             const payments = await window.AdminAPI.getPayments();
             console.log('PaymentsTab: Payments received:', payments?.length || 0);
-            state.payments = payments;
+            state.payments = payments || [];
             updateStats();
             renderPayments();
         } catch (error) {
             console.error('PaymentsTab: Failed to load payments:', error);
+            // Show empty state on error
+            state.payments = [];
+            updateStats();
+            renderPayments();
             window.AdminUtils.showToast('Failed to load payments', 'error');
         }
     }
@@ -86,7 +92,7 @@
         const grid = document.getElementById('paymentsGrid');
         if (!grid) return;
 
-        let filteredPayments = state.payments;
+        let filteredPayments = state.payments || [];
 
         // Apply status filter
         if (state.currentFilter !== 'all') {
@@ -102,7 +108,7 @@
             );
         }
 
-        if (filteredPayments.length === 0) {
+        if (!filteredPayments || filteredPayments.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-credit-card"></i>
@@ -180,8 +186,26 @@
     async function confirmPayment(paymentId) {
         if (!confirm('Are you sure you want to confirm this payment?')) return;
 
+        const payment = state.payments.find(p => p.id === paymentId);
+        const paymentName = payment ? `Order #${payment.orderId}` : `Payment #${paymentId}`;
+
         try {
             await window.AdminAPI.updatePaymentStatus(paymentId, 'confirmed');
+
+            // Log the action
+            try {
+                await window.AdminAPI.createLog({
+                    action: 'confirm',
+                    entityType: 'payment',
+                    entityId: paymentId,
+                    entityName: paymentName,
+                    details: `Confirmed payment for order #${payment?.orderId || 'unknown'}`,
+                    adminName: 'Admin'
+                });
+            } catch (logError) {
+                console.error('Failed to log payment confirmation:', logError);
+            }
+
             window.AdminUtils.showToast('Payment confirmed successfully', 'success');
             await loadData();
         } catch (error) {
@@ -195,8 +219,26 @@
         const notes = prompt('Please provide a reason for rejection (optional):');
         if (notes === null) return; // User cancelled
 
+        const payment = state.payments.find(p => p.id === paymentId);
+        const paymentName = payment ? `Order #${payment.orderId}` : `Payment #${paymentId}`;
+
         try {
             await window.AdminAPI.updatePaymentStatus(paymentId, 'rejected', notes);
+
+            // Log the action
+            try {
+                await window.AdminAPI.createLog({
+                    action: 'reject',
+                    entityType: 'payment',
+                    entityId: paymentId,
+                    entityName: paymentName,
+                    details: `Rejected payment for order #${payment?.orderId || 'unknown'}${notes ? `: ${notes}` : ''}`,
+                    adminName: 'Admin'
+                });
+            } catch (logError) {
+                console.error('Failed to log payment rejection:', logError);
+            }
+
             window.AdminUtils.showToast('Payment rejected', 'success');
             await loadData();
         } catch (error) {

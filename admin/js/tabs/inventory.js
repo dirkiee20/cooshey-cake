@@ -560,8 +560,26 @@ const InventoryTab = (function() {
     async function deleteProduct(productId) {
         if (!confirm('Are you sure you want to delete this product?')) return;
 
+        const product = state.products.find(p => p.id === productId);
+        const productName = product ? product.name : 'Unknown Product';
+
         try {
             await window.AdminAPI.deleteProduct(productId);
+
+            // Log the action
+            try {
+                await window.AdminAPI.createLog({
+                    action: 'delete',
+                    entityType: 'product',
+                    entityId: productId,
+                    entityName: productName,
+                    details: `Deleted product`,
+                    adminName: 'Admin'
+                });
+            } catch (logError) {
+                console.error('Failed to log product deletion:', logError);
+            }
+
             window.AdminUtils.showToast('Product deleted successfully', 'success');
             await loadData();
         } catch (error) {
@@ -616,6 +634,21 @@ const InventoryTab = (function() {
 
             const result = await response.json();
             console.log('Success response:', result);
+
+            // Log the action
+            try {
+                await window.AdminAPI.createLog({
+                    action: 'create',
+                    entityType: 'product',
+                    entityId: result.id,
+                    entityName: name,
+                    details: `Created product with ${stock} stock at ₱${price}`,
+                    adminName: 'Admin' // You can get this from user context
+                });
+            } catch (logError) {
+                console.error('Failed to log product creation:', logError);
+            }
+
             window.AdminUtils.showToast('Product added successfully', 'success');
             await loadData();
 
@@ -662,6 +695,20 @@ const InventoryTab = (function() {
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to update product');
+            }
+
+            // Log the action
+            try {
+                await window.AdminAPI.createLog({
+                    action: 'update',
+                    entityType: 'product',
+                    entityId: productId,
+                    entityName: document.getElementById('editProductName').value.trim(),
+                    details: `Updated product details`,
+                    adminName: 'Admin'
+                });
+            } catch (logError) {
+                console.error('Failed to log product update:', logError);
             }
 
             window.AdminUtils.showToast('Product updated successfully', 'success');

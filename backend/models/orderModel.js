@@ -58,4 +58,6 @@ require('./Product').hasMany(OrderItem, { foreignKey: 'productId' });
 Order.belongsTo(require('./userModel'), { foreignKey: 'userId', as: 'user' });
 require('./userModel').hasMany(Order, { foreignKey: 'userId' });
 
+// Associations will be defined in server.js to avoid circular dependencies
+
 module.exports = { Order, OrderItem };

@@ -45,8 +45,6 @@ const Payment = sequelize.define('Payment', {
   timestamps: true,
 });
 
-// Define associations
-Payment.belongsTo(require('./orderModel').Order, { foreignKey: 'orderId', as: 'order' });
-require('./orderModel').Order.hasOne(Payment, { foreignKey: 'orderId', as: 'payment' });
+// Associations will be defined in server.js to avoid circular dependencies
 
 module.exports = Payment;

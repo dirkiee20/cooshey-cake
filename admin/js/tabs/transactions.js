@@ -7,9 +7,9 @@ const TransactionsTab = (function() {
     // State
     let state = {
         transactions: [],
+        products: [],
         currentFilter: 'all',
         searchTerm: '',
-        actionFilter: '',
         currentPage: 1,
         itemsPerPage: 20,
         totalPages: 1
@@ -19,18 +19,16 @@ const TransactionsTab = (function() {
     function init() {
         console.log('TransactionsTab: Initializing transactions tab');
         bindEvents();
-        setupEventListeners();
+        loadProducts();
         loadData();
     }
 
     // Bind event listeners
     function bindEvents() {
-        // Refresh button
-        const refreshBtn = document.getElementById('refreshTransactionsBtn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                loadData();
-            });
+        // Add transaction button
+        const addBtn = document.getElementById('addTransactionBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => openTransactionModal());
         }
 
         // Filter tabs
@@ -50,79 +48,67 @@ const TransactionsTab = (function() {
             });
         }
 
-        // Action filter
-        const actionFilter = document.getElementById('actionFilter');
-        if (actionFilter) {
-            actionFilter.addEventListener('change', (e) => {
-                state.actionFilter = e.target.value;
-                renderTransactions();
-            });
-        }
+        // Modal events
+        setupModalEvents();
+    }
 
-        // Pagination
-        const prevBtn = document.getElementById('prevPageBtn');
-        const nextBtn = document.getElementById('nextPageBtn');
+    // Setup modal events
+    function setupModalEvents() {
+        const modal = document.getElementById('transactionModal');
+        const closeBtn = modal.querySelector('.close-btn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const form = document.getElementById('transactionForm');
 
-        if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
-                if (state.currentPage > 1) {
-                    state.currentPage--;
-                    renderTransactions();
-                }
-            });
-        }
+        closeBtn.addEventListener('click', () => closeTransactionModal());
+        cancelBtn.addEventListener('click', () => closeTransactionModal());
 
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
-                if (state.currentPage < state.totalPages) {
-                    state.currentPage++;
-                    renderTransactions();
-                }
-            });
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeTransactionModal();
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', handleTransactionSubmit);
+    }
+
+    // Load products for dropdown
+    async function loadProducts() {
+        try {
+            const products = await window.AdminAPI.getProducts();
+            state.products = products;
+            populateProductSelect();
+        } catch (error) {
+            console.error('TransactionsTab: Error loading products:', error);
         }
     }
 
-    // Setup event listeners for cross-tab communication
-    function setupEventListeners() {
-        // Check if AdminEvents is available
-        if (!window.AdminEvents) {
-            console.warn('AdminEvents not available, skipping event listeners setup');
-            return;
-        }
+    // Populate product select dropdown
+    function populateProductSelect() {
+        const select = document.getElementById('productSelect');
+        select.innerHTML = '<option value="">Select a product...</option>';
 
-        // Listen for inventory changes
-        window.AdminEvents.on('productAdded', handleProductChange);
-        window.AdminEvents.on('productUpdated', handleProductChange);
-        window.AdminEvents.on('productDeleted', handleProductChange);
-    }
-
-    // Handle product changes
-    function handleProductChange(data) {
-        console.log('TransactionsTab: Product change detected, refreshing data', data);
-        loadData();
+        state.products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = `${product.name} (Current stock: ${product.stock})`;
+            select.appendChild(option);
+        });
     }
 
     // Load transactions data
     async function loadData() {
         try {
             console.log('TransactionsTab: Loading transactions data');
-            const transactions = await window.AdminAPI.getTransactions();
+            const transactions = await window.AdminAPI.getStockTransactions();
             console.log('TransactionsTab: Transactions received:', transactions?.length || 0);
-            state.transactions = transactions;
-            state.currentPage = 1;
-            calculateTotalPages();
+            state.transactions = transactions || [];
             renderTransactions();
         } catch (error) {
-            console.error('TransactionsTab: Failed to load transactions:', error);
+            console.error('TransactionsTab: Error loading transactions:', error);
             window.AdminUtils.showToast('Failed to load transactions', 'error');
-            showEmptyState();
         }
-    }
-
-    // Calculate total pages
-    function calculateTotalPages() {
-        const filteredTransactions = getFilteredTransactions();
-        state.totalPages = Math.ceil(filteredTransactions.length / state.itemsPerPage);
     }
 
     // Set active filter
@@ -139,190 +125,227 @@ const TransactionsTab = (function() {
             activeTab.classList.add('active');
         }
 
-        state.currentPage = 1;
-        calculateTotalPages();
         renderTransactions();
-    }
-
-    // Get filtered transactions
-    function getFilteredTransactions() {
-        let filtered = state.transactions;
-
-        // Apply type filter
-        if (state.currentFilter !== 'all') {
-            filtered = filtered.filter(transaction => transaction.type === state.currentFilter);
-        }
-
-        // Apply action filter
-        if (state.actionFilter) {
-            filtered = filtered.filter(transaction => transaction.action === state.actionFilter);
-        }
-
-        // Apply search filter
-        if (state.searchTerm) {
-            filtered = filtered.filter(transaction =>
-                transaction.productName.toLowerCase().includes(state.searchTerm) ||
-                transaction.productDetails.toLowerCase().includes(state.searchTerm) ||
-                transaction.id.toString().includes(state.searchTerm)
-            );
-        }
-
-        return filtered;
     }
 
     // Render transactions table
     function renderTransactions() {
-        const tableBody = document.getElementById('transactionsTableBody');
-        if (!tableBody) return;
+        const tbody = document.getElementById('transactionsTableBody');
+        if (!tbody) return;
 
-        const filteredTransactions = getFilteredTransactions();
+        let filteredTransactions = state.transactions;
 
-        if (filteredTransactions.length === 0) {
-            showEmptyState();
-            hidePagination();
-            return;
+        // Apply type filter
+        if (state.currentFilter !== 'all') {
+            filteredTransactions = filteredTransactions.filter(transaction =>
+                transaction.type === state.currentFilter
+            );
         }
 
-        // Paginate
+        // Apply search filter
+        if (state.searchTerm) {
+            filteredTransactions = filteredTransactions.filter(transaction =>
+                transaction.product?.name.toLowerCase().includes(state.searchTerm) ||
+                transaction.reference?.toLowerCase().includes(state.searchTerm) ||
+                transaction.notes?.toLowerCase().includes(state.searchTerm)
+            );
+        }
+
+        // Pagination
         const startIndex = (state.currentPage - 1) * state.itemsPerPage;
         const endIndex = startIndex + state.itemsPerPage;
         const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
 
-        tableBody.innerHTML = paginatedTransactions.map(transaction => `
+        if (paginatedTransactions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <i class="fas fa-exchange-alt"></i>
+                        <h3>No transactions found</h3>
+                        <p>${state.searchTerm ? 'Try adjusting your search terms' : 'No transactions match the current filter'}</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = paginatedTransactions.map(transaction => `
             <tr>
-                <td>${formatDateTime(transaction.createdAt)}</td>
-                <td>#${transaction.id}</td>
-                <td><span class="transaction-action ${transaction.action}">${transaction.action}</span></td>
-                <td><span class="transaction-type ${transaction.type}">${formatType(transaction.type)}</span></td>
+                <td>${window.AdminUtils.formatDate(transaction.createdAt)}</td>
                 <td>
-                    <div class="product-details">
-                        <div class="detail-item"><strong>${window.AdminUtils.sanitizeInput(transaction.productName)}</strong></div>
-                        <div class="detail-item">${transaction.productDetails}</div>
+                    <div class="product-info">
+                        <strong>${transaction.product?.name || 'Unknown Product'}</strong>
                     </div>
                 </td>
-                <td>${formatStockChange(transaction)}</td>
+                <td>
+                    <span class="transaction-type ${transaction.type}">
+                        ${formatTransactionType(transaction.type)}
+                    </span>
+                </td>
+                <td>${transaction.quantity}</td>
+                <td>
+                    <span class="stock-change ${getStockChangeClass(transaction.type)}">
+                        ${getStockChangeSymbol(transaction.type)}${transaction.quantity}
+                    </span>
+                </td>
+                <td>${transaction.reference || '-'}</td>
+                <td>${transaction.admin?.name || 'System'}</td>
+                <td>${transaction.notes || '-'}</td>
             </tr>
         `).join('');
 
-        showPagination(filteredTransactions.length);
+        // Update pagination
+        updatePagination(filteredTransactions.length);
     }
 
-    // Format date and time
-    function formatDateTime(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
+    // Format transaction type for display
+    function formatTransactionType(type) {
+        const types = {
+            'stock_in': 'Stock In',
+            'stock_out': 'Stock Out',
+            'adjustment': 'Adjustment',
+            'sale': 'Sale',
+            'return': 'Return'
+        };
+        return types[type] || type;
     }
 
-    // Format transaction type
-    function formatType(type) {
-        return type === 'stock_in' ? 'Stock In' : 'Stock Out';
+    // Get stock change class
+    function getStockChangeClass(type) {
+        if (type === 'stock_in' || type === 'return') {
+            return 'positive';
+        } else if (type === 'stock_out' || type === 'sale' || type === 'adjustment') {
+            return 'negative';
+        }
+        return '';
     }
 
-    // Format stock change
-    function formatStockChange(transaction) {
-        if (!transaction.quantityChange) return '-';
-
-        const sign = transaction.quantityChange > 0 ? '+' : '';
-        const className = transaction.quantityChange > 0 ? 'positive' :
-                         transaction.quantityChange < 0 ? 'negative' : 'zero';
-
-        return `<span class="stock-change ${className}">${sign}${transaction.quantityChange}</span>`;
+    // Get stock change symbol
+    function getStockChangeSymbol(type) {
+        if (type === 'stock_in' || type === 'return') {
+            return '+';
+        } else if (type === 'stock_out' || type === 'sale' || type === 'adjustment') {
+            return '-';
+        }
+        return '';
     }
 
-    // Show empty state
-    function showEmptyState() {
-        const tableBody = document.getElementById('transactionsTableBody');
-        if (!tableBody) return;
+    // Update pagination
+    function updatePagination(totalItems) {
+        state.totalPages = Math.ceil(totalItems / state.itemsPerPage);
 
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="empty-state">
-                    <i class="fas fa-history"></i>
-                    <h3>No transactions found</h3>
-                    <p>Transaction history will appear here when admin actions are performed on inventory.</p>
-                </td>
-            </tr>
-        `;
-    }
-
-    // Show pagination
-    function showPagination(totalItems) {
         const paginationContainer = document.getElementById('paginationContainer');
         const paginationInfo = document.getElementById('paginationInfo');
+        const pageNumbers = document.getElementById('pageNumbers');
         const prevBtn = document.getElementById('prevPageBtn');
         const nextBtn = document.getElementById('nextPageBtn');
-        const pageNumbers = document.getElementById('pageNumbers');
 
-        if (!paginationContainer || !paginationInfo || !prevBtn || !nextBtn || !pageNumbers) return;
-
-        // Update info
-        const startItem = (state.currentPage - 1) * state.itemsPerPage + 1;
-        const endItem = Math.min(state.currentPage * state.itemsPerPage, totalItems);
-        paginationInfo.textContent = `Showing ${startItem}-${endItem} of ${totalItems} transactions`;
-
-        // Update buttons
-        prevBtn.disabled = state.currentPage === 1;
-        nextBtn.disabled = state.currentPage === state.totalPages;
-
-        // Generate page numbers
-        pageNumbers.innerHTML = '';
-        const maxVisiblePages = 5;
-        let startPage = Math.max(1, state.currentPage - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(state.totalPages, startPage + maxVisiblePages - 1);
-
-        if (endPage - startPage + 1 < maxVisiblePages) {
-            startPage = Math.max(1, endPage - maxVisiblePages + 1);
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            const pageBtn = document.createElement('button');
-            pageBtn.className = `page-number ${i === state.currentPage ? 'active' : ''}`;
-            pageBtn.textContent = i;
-            pageBtn.addEventListener('click', () => {
-                state.currentPage = i;
-                renderTransactions();
-            });
-            pageNumbers.appendChild(pageBtn);
+        if (state.totalPages <= 1) {
+            paginationContainer.style.display = 'none';
+            return;
         }
 
         paginationContainer.style.display = 'flex';
-    }
+        paginationInfo.textContent = `Showing ${Math.min(totalItems, state.itemsPerPage)} of ${totalItems} transactions`;
 
-    // Hide pagination
-    function hidePagination() {
-        const paginationContainer = document.getElementById('paginationContainer');
-        if (paginationContainer) {
-            paginationContainer.style.display = 'none';
+        // Update page numbers
+        let pageHtml = '';
+        for (let i = 1; i <= state.totalPages; i++) {
+            pageHtml += `<button class="page-number ${i === state.currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
         }
+        pageNumbers.innerHTML = pageHtml;
+
+        // Update navigation buttons
+        prevBtn.disabled = state.currentPage === 1;
+        nextBtn.disabled = state.currentPage === state.totalPages;
+
+        // Bind page number events
+        pageNumbers.querySelectorAll('.page-number').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                state.currentPage = parseInt(e.target.dataset.page);
+                renderTransactions();
+            });
+        });
+
+        prevBtn.onclick = () => {
+            if (state.currentPage > 1) {
+                state.currentPage--;
+                renderTransactions();
+            }
+        };
+
+        nextBtn.onclick = () => {
+            if (state.currentPage < state.totalPages) {
+                state.currentPage++;
+                renderTransactions();
+            }
+        };
     }
 
-    // Cleanup function to remove event listeners
-    function cleanup() {
-        if (!window.AdminEvents) return;
+    // Open transaction modal
+    function openTransactionModal() {
+        const modal = document.getElementById('transactionModal');
+        const form = document.getElementById('transactionForm');
 
-        window.AdminEvents.off('productAdded', handleProductChange);
-        window.AdminEvents.off('productUpdated', handleProductChange);
-        window.AdminEvents.off('productDeleted', handleProductChange);
+        // Reset form
+        form.reset();
+        document.getElementById('modalTitle').textContent = 'Add Stock Transaction';
+
+        // Show modal
+        modal.style.display = 'flex';
+    }
+
+    // Close transaction modal
+    function closeTransactionModal() {
+        const modal = document.getElementById('transactionModal');
+        modal.style.display = 'none';
+    }
+
+    // Handle transaction form submission
+    async function handleTransactionSubmit(e) {
+        e.preventDefault();
+
+        const formData = {
+            productId: parseInt(document.getElementById('productSelect').value),
+            type: document.getElementById('transactionType').value,
+            quantity: parseInt(document.getElementById('quantity').value),
+            reference: document.getElementById('reference').value.trim(),
+            notes: document.getElementById('notes').value.trim()
+        };
+
+        try {
+            await window.AdminAPI.createStockTransaction(formData);
+
+            // Log the action
+            try {
+                const product = state.products.find(p => p.id === formData.productId);
+                await window.AdminAPI.createLog({
+                    action: 'create',
+                    entityType: 'transaction',
+                    entityId: null,
+                    entityName: `${formatTransactionType(formData.type)} - ${product?.name || 'Unknown Product'}`,
+                    details: `${formData.type} transaction: ${formData.quantity} units${formData.reference ? ` (Ref: ${formData.reference})` : ''}`,
+                    adminName: 'Admin'
+                });
+            } catch (logError) {
+                console.error('Failed to log transaction:', logError);
+            }
+
+            window.AdminUtils.showToast('Transaction added successfully', 'success');
+            closeTransactionModal();
+            await loadData();
+            await loadProducts(); // Refresh product stock levels
+        } catch (error) {
+            console.error('Error creating transaction:', error);
+            window.AdminUtils.showToast('Failed to add transaction', 'error');
+        }
     }
 
     // Export public API
     const publicAPI = {
-        init,
-        loadData,
-        cleanup
+        init: init,
+        loadData: loadData
     };
-
-    console.log('TransactionsTab public API:', publicAPI);
-
-    // Make it globally available
-    window.TransactionsTab = publicAPI;
 
     return publicAPI;
 

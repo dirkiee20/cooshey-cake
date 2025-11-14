@@ -50,6 +50,15 @@ require('./models/Transaction');
 require('./models/cartModel');
 require('./models/orderModel');
 require('./models/Payment');
+require('./models/Log');
+require('./models/StockTransaction');
+
+// Define associations after all models are loaded
+const { Order } = require('./models/orderModel');
+const Payment = require('./models/Payment');
+
+Order.hasOne(Payment, { foreignKey: 'orderId', as: 'payment' });
+Payment.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
 // Sync database models
 sequelize.sync({ alter: true }) // Use alter to update schema without losing data
@@ -63,6 +72,8 @@ const cartRoutes = require('./routes/cartRoutes');
 const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const logRoutes = require('./routes/logRoutes');
+const stockTransactionRoutes = require('./routes/stockTransactionRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -107,10 +118,12 @@ app.get('/health', (req, res) => {
 
 app.use('/api/products', productRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/stock-transactions', stockTransactionRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/logs', logRoutes);
 
 // This should be the last middleware
 // It will catch any errors from your routes

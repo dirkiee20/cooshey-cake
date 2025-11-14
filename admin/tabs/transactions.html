@@ -2,12 +2,12 @@
 <section class="transactions-section" id="transactionsSection">
     <div class="section-header">
         <div class="header-left">
-            <h2><i class="fas fa-history"></i> Transaction History</h2>
-            <p>Track all admin actions on inventory management</p>
+            <h2><i class="fas fa-exchange-alt"></i> Stock Transactions</h2>
+            <p>Track inventory stock movements and adjustments</p>
         </div>
         <div class="header-right">
-            <button class="btn btn-secondary" id="refreshTransactionsBtn" aria-label="Refresh transactions">
-                <i class="fas fa-sync-alt"></i> Refresh
+            <button class="btn btn-primary" id="addTransactionBtn">
+                <i class="fas fa-plus"></i> Add Transaction
             </button>
         </div>
     </div>
@@ -17,6 +17,7 @@
             <button class="filter-tab active" data-filter="all">All Transactions</button>
             <button class="filter-tab" data-filter="stock_in">Stock In</button>
             <button class="filter-tab" data-filter="stock_out">Stock Out</button>
+            <button class="filter-tab" data-filter="adjustment">Adjustments</button>
         </div>
 
         <div class="search-filter">
@@ -24,32 +25,27 @@
                 <i class="fas fa-search"></i>
                 <input type="text" placeholder="Search transactions..." id="transactionSearch">
             </div>
-            <select class="filter-select" id="actionFilter">
-                <option value="">All Actions</option>
-                <option value="add">Add</option>
-                <option value="edit">Edit</option>
-                <option value="delete">Delete</option>
-            </select>
         </div>
     </div>
 
     <div class="transactions-table-container">
-        <table class="transactions-table" id="transactionsTable">
+        <table class="data-table" id="transactionsTable">
             <thead>
                 <tr>
                     <th>Date & Time</th>
-                    <th>Transaction ID</th>
-                    <th>Action</th>
-                    <th>Type</th>
                     <th>Product</th>
-                    <th>Details</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
                     <th>Stock Change</th>
+                    <th>Reference</th>
+                    <th>Admin</th>
+                    <th>Notes</th>
                 </tr>
             </thead>
             <tbody id="transactionsTableBody">
-                <!-- Transactions will be loaded here -->
+                <!-- Transaction data will be loaded here -->
                 <tr>
-                    <td colspan="7" class="loading-row">
+                    <td colspan="8" class="loading-row">
                         <div class="loading-spinner">Loading transactions...</div>
                     </td>
                 </tr>
@@ -70,3 +66,51 @@
         </div>
     </div>
 </section>
+
+<!-- Add Transaction Modal -->
+<div id="transactionModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2 id="modalTitle">Add Stock Transaction</h2>
+
+        <form id="transactionForm">
+            <div class="form-group">
+                <label for="productSelect">Product *</label>
+                <select id="productSelect" required>
+                    <option value="">Select a product...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="transactionType">Transaction Type *</label>
+                <select id="transactionType" required>
+                    <option value="stock_in">Stock In</option>
+                    <option value="stock_out">Stock Out</option>
+                    <option value="adjustment">Adjustment</option>
+                    <option value="sale">Sale</option>
+                    <option value="return">Return</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Quantity *</label>
+                <input type="number" id="quantity" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="reference">Reference (Order ID, Invoice, etc.)</label>
+                <input type="text" id="reference" placeholder="Optional reference">
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" rows="3" placeholder="Additional notes..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Transaction</button>
+            </div>
+        </form>
+    </div>
+</div>

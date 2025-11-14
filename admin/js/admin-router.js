@@ -162,13 +162,36 @@
 
                 // Load and execute JavaScript module
                 console.log(`Loading JS module for tab: ${tabName}`);
-                const jsModule = await import(`/admin/js/tabs/${tabName}.js`);
-                console.log(`JS module loaded for ${tabName}:`, jsModule);
-                console.log(`JS module keys:`, Object.keys(jsModule));
-                console.log(`JS module default:`, jsModule.default);
-                if (jsModule.default) {
-                    console.log(`Default export type:`, typeof jsModule.default);
-                    console.log(`Default export keys:`, Object.keys(jsModule.default || {}));
+                let jsModule = null;
+                let scriptLoaded = false;
+                try {
+                    jsModule = await import(`/admin/js/tabs/${tabName}.js`);
+                    console.log(`JS module loaded for ${tabName}:`, jsModule);
+                    console.log(`JS module keys:`, Object.keys(jsModule));
+                    console.log(`JS module default:`, jsModule.default);
+                    if (jsModule.default) {
+                        console.log(`Default export type:`, typeof jsModule.default);
+                        console.log(`Default export keys:`, Object.keys(jsModule.default || {}));
+                    }
+                } catch (importError) {
+                    console.error(`Failed to import JS module for ${tabName}, trying script tag:`, importError);
+                    // Load as script tag instead
+                    try {
+                        await new Promise((resolve, reject) => {
+                            const script = document.createElement('script');
+                            script.src = `/admin/js/tabs/${tabName}.js`;
+                            script.onload = () => {
+                                console.log(`Script loaded for ${tabName}`);
+                                scriptLoaded = true;
+                                resolve();
+                            };
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        });
+                    } catch (scriptError) {
+                        console.error(`Failed to load script for ${tabName}:`, scriptError);
+                    }
+                    jsModule = null;
                 }
 
                 // Update content
@@ -176,19 +199,38 @@
                 console.log(`HTML content loaded for ${tabName}`);
 
                 // Initialize tab if init function exists
-                if (jsModule.default && jsModule.default.init) {
+                if (jsModule && jsModule.default && jsModule.default.init) {
                     console.log(`Initializing ${tabName} tab (default export)`);
                     jsModule.default.init();
-                } else if (jsModule.init) {
+                } else if (jsModule && jsModule.init) {
                     console.log(`Initializing ${tabName} tab (named export)`);
                     jsModule.init();
                 } else {
-                    console.warn(`No init function found for ${tabName} tab`);
-                    console.log(`Checking window object for ${tabName}Tab:`, window[tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Tab']);
+                    console.warn(`No init function found for ${tabName} tab in module, checking window object`);
+                    const windowTabName = tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Tab';
+                    console.log(`Checking window object for ${windowTabName}:`, window[windowTabName]);
+                    if (window[windowTabName] && window[windowTabName].init) {
+                        console.log(`Initializing ${tabName} tab from window object`);
+                        window[windowTabName].init();
+                    } else if (scriptLoaded) {
+                        // Script was loaded, wait a bit and try again
+                        console.log(`Script loaded for ${tabName}, waiting for initialization...`);
+                        setTimeout(() => {
+                            console.log(`Retrying window object check for ${windowTabName}:`, window[windowTabName]);
+                            if (window[windowTabName] && window[windowTabName].init) {
+                                console.log(`Initializing ${tabName} tab from window object (delayed)`);
+                                window[windowTabName].init();
+                            } else {
+                                console.error(`Still no init function found for ${tabName} tab`);
+                            }
+                        }, 100);
+                    } else {
+                        console.error(`No init function found for ${tabName} tab anywhere`);
+                    }
                 }
 
                 // Also attach to window for backward compatibility
-                if (jsModule.default) {
+                if (jsModule && jsModule.default) {
                     window[tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Tab'] = jsModule.default;
                 }
 

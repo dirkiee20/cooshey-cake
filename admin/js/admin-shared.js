@@ -263,6 +263,34 @@
                 method: 'PUT',
                 body: JSON.stringify({ status, notes })
             });
+        },
+
+        // Logs
+        async getLogs() {
+            return await this.request('/logs');
+        },
+
+        async createLog(logData) {
+            return await this.request('/logs', {
+                method: 'POST',
+                body: JSON.stringify(logData)
+            });
+        },
+
+        // Stock Transactions
+        async getStockTransactions() {
+            return await this.request('/stock-transactions');
+        },
+
+        async createStockTransaction(transactionData) {
+            return await this.request('/stock-transactions', {
+                method: 'POST',
+                body: JSON.stringify(transactionData)
+            });
+        },
+
+        async getProductStockTransactions(productId) {
+            return await this.request(`/stock-transactions/product/${productId}`);
         }
     };
 

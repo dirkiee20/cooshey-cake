@@ -180,8 +180,26 @@ const OrdersTab = (function() {
         const newStatus = prompt('Enter new status:', currentStatus);
         if (!newStatus || newStatus === currentStatus) return;
 
+        const order = state.orders.find(o => o.id === orderId);
+        const orderName = order ? `Order #${orderId}` : `Order #${orderId}`;
+
         try {
             await window.AdminAPI.updateOrderStatus(orderId, newStatus);
+
+            // Log the action
+            try {
+                await window.AdminAPI.createLog({
+                    action: 'update',
+                    entityType: 'order',
+                    entityId: orderId,
+                    entityName: orderName,
+                    details: `Changed status from ${currentStatus} to ${newStatus}`,
+                    adminName: 'Admin'
+                });
+            } catch (logError) {
+                console.error('Failed to log order status update:', logError);
+            }
+
             window.AdminUtils.showToast('Order status updated successfully', 'success');
             await loadData();
         } catch (error) {
