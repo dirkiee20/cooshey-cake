@@ -1,5 +1,5 @@
 // Orders Tab Module
-(function() {
+const OrdersTab = (function() {
     'use strict';
 
     // State
@@ -51,11 +51,13 @@
     // Load orders data
     async function loadData() {
         try {
+            console.log('OrdersTab: Loading orders data');
             const orders = await window.AdminAPI.getOrders();
+            console.log('OrdersTab: Orders received:', orders?.length || 0);
             state.orders = orders;
             renderOrders();
         } catch (error) {
-            console.error('Error loading orders:', error);
+            console.error('OrdersTab: Error loading orders:', error);
             window.AdminUtils.showToast('Failed to load orders', 'error');
         }
     }
@@ -188,11 +190,16 @@
     }
 
     // Export public API
-    window.OrdersTab = {
+    const publicAPI = {
         init: init,
         loadData: loadData,
         viewOrderDetails: viewOrderDetails,
         updateOrderStatus: updateOrderStatus
     };
 
+    return publicAPI;
+
 })();
+
+// Export as default for ES6 modules
+export default OrdersTab;

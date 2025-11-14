@@ -39,12 +39,14 @@
     // Load payments data
     async function loadData() {
         try {
+            console.log('PaymentsTab: Loading payments data');
             const payments = await window.AdminAPI.getPayments();
+            console.log('PaymentsTab: Payments received:', payments?.length || 0);
             state.payments = payments;
             updateStats();
             renderPayments();
         } catch (error) {
-            console.error('Failed to load payments:', error);
+            console.error('PaymentsTab: Failed to load payments:', error);
             window.AdminUtils.showToast('Failed to load payments', 'error');
         }
     }

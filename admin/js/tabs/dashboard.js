@@ -1,5 +1,5 @@
 // Dashboard Tab Module
-(function() {
+const DashboardTab = (function() {
     'use strict';
 
     // State
@@ -12,14 +12,21 @@
 
     // Initialize dashboard
     function init() {
-        loadData();
-        setupInteractiveElements();
-        setupRealTimeUpdates();
+        console.log('Dashboard: Initializing dashboard');
+        try {
+            loadData();
+            setupInteractiveElements();
+            setupRealTimeUpdates();
+            console.log('Dashboard: Initialization completed');
+        } catch (error) {
+            console.error('Dashboard: Initialization error:', error);
+        }
     }
 
     // Load all dashboard data
     async function loadData() {
         try {
+            console.log('Dashboard: Starting to load data');
             // Load stats
             await loadStats();
 
@@ -28,6 +35,7 @@
 
             // Initialize charts
             initializeCharts();
+            console.log('Dashboard: Data loading completed successfully');
 
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -38,12 +46,14 @@
     // Load dashboard statistics
     async function loadStats() {
         try {
+            console.log('Dashboard: Loading stats - calling APIs');
             const [products, users, orders] = await Promise.all([
                 window.AdminAPI.getProducts(),
                 window.AdminAPI.getUsers(),
                 window.AdminAPI.getOrders()
             ]);
 
+            console.log('Dashboard: API calls completed', { products: products?.length, users: users?.length, orders: orders?.length });
             state.products = products;
             state.users = users;
             state.orders = orders;
@@ -350,11 +360,16 @@
     }
 
     // Export public API
-    window.DashboardTab = {
+    const publicAPI = {
         init: init,
         loadData: loadData,
         reloadStats: loadStats,
         switchChartPeriod: switchChartPeriod
     };
 
+    return publicAPI;
+
 })();
+
+// Export as default for ES6 modules
+export default DashboardTab;

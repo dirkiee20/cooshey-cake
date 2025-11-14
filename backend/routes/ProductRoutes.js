@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Transaction = require('../models/Transaction');
 const upload = require('../middleware/uploadMiddleware');
 const multer = require('multer');
 
@@ -17,7 +18,7 @@ router.post('/upload', upload.single('image'), (req, res) => {
 
 // @route   GET /api/products
 // @desc    Get all products
-// @access  Public
+// @access  Public (temporarily no auth for debug)
 router.get('/', async (req, res) => {
   try {
     const filter = {};
@@ -41,7 +42,7 @@ router.get('/', async (req, res) => {
     res.json(productsWithAbsoluteImageUrls);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -65,7 +66,7 @@ router.get('/:id', async (req, res) => {
     res.json(productWithAbsoluteImageUrl);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -77,11 +78,13 @@ const uploadProduct = upload.fields([
 ]);
 
 router.post('/', uploadProduct, async (req, res) => {
-   console.log('=== ADD PRODUCT REQUEST START ===');
-   console.log('Headers:', req.headers);
-   console.log('Body:', req.body);
-   console.log('Files:', req.files);
-   console.log('File count:', req.files ? Object.keys(req.files).length : 0);
+    console.log('=== ADD PRODUCT REQUEST RECEIVED ===');
+    console.log('Request method:', req.method, 'path:', req.path);
+    console.log('=== ADD PRODUCT REQUEST START ===');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    console.log('Files:', req.files);
+    console.log('File count:', req.files ? Object.keys(req.files).length : 0);
 
    const { name, price, description, category = 'popular', stock } = req.body;
    console.log('Extracted data:', { name, price, description, category, stock });
@@ -109,6 +112,18 @@ router.post('/', uploadProduct, async (req, res) => {
        stock: stock || 0
      });
      console.log('PRODUCT CREATED SUCCESSFULLY:', product.id);
+
+     // Log transaction
+     await Transaction.create({
+       action: 'add',
+       type: 'stock_in',
+       productId: product.id,
+       productName: product.name,
+       productDetails: `Price: ₱${product.price}, Category: ${product.category}, Stock: ${product.stock}`,
+       quantityChange: product.stock,
+       newStock: product.stock,
+     });
+
      res.status(201).json(product);
    } catch (error) {
      console.error('ERROR CREATING PRODUCT:', error);
@@ -127,6 +142,12 @@ const uploadUpdate = upload.fields([
 router.put('/:id', uploadUpdate, async (req, res) => {
   try {
     const { name, price, description, category, stock } = req.body;
+
+    // Get the current product before update
+    const currentProduct = await Product.findByPk(req.params.id);
+    if (!currentProduct) {
+      return res.status(404).json({ msg: 'Product not found' });
+    }
 
     // Get uploaded image URL if new image provided
     const imageUrl = req.files && req.files.image && req.files.image[0]
@@ -150,10 +171,29 @@ router.put('/:id', uploadUpdate, async (req, res) => {
       return res.status(404).json({ msg: 'Product not found' });
     }
 
-    res.json(updatedRows[0]);
+    const updatedProduct = updatedRows[0];
+
+    // Log transaction if stock changed
+    if (stock !== undefined && stock !== currentProduct.stock) {
+      const quantityChange = stock - currentProduct.stock;
+      const transactionType = quantityChange > 0 ? 'stock_in' : 'stock_out';
+
+      await Transaction.create({
+        action: 'edit',
+        type: transactionType,
+        productId: updatedProduct.id,
+        productName: updatedProduct.name,
+        productDetails: `Price: ₱${updatedProduct.price}, Category: ${updatedProduct.category}, Stock changed from ${currentProduct.stock} to ${updatedProduct.stock}`,
+        quantityChange: quantityChange,
+        previousStock: currentProduct.stock,
+        newStock: updatedProduct.stock,
+      });
+    }
+
+    res.json(updatedProduct);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -161,19 +201,45 @@ router.put('/:id', uploadUpdate, async (req, res) => {
 // @desc    Delete a product
 // @access  Public (for now)
 router.delete('/:id', async (req, res) => {
+  console.log('=== DELETE PRODUCT START ===');
+  console.log('Product ID:', req.params.id);
   try {
+    // Get the product before deleting
+    const product = await Product.findByPk(req.params.id);
+    if (!product) {
+      console.log('Product not found');
+      return res.status(404).json({ msg: 'Product not found' });
+    }
+    console.log('Product found:', product.name);
+
+    // Log transaction
+    console.log('Creating transaction...');
+    const transaction = await Transaction.create({
+      action: 'delete',
+      type: 'stock_out',
+      productId: product.id,
+      productName: product.name,
+      productDetails: `Price: ₱${product.price}, Category: ${product.category}, Stock removed: ${product.stock}`,
+      quantityChange: -product.stock,
+      previousStock: product.stock,
+      newStock: 0,
+    });
+    console.log('Transaction created:', transaction.id);
+
     const deletedRowsCount = await Product.destroy({
       where: { id: req.params.id }
     });
+    console.log('Product deleted, rows affected:', deletedRowsCount);
 
     if (deletedRowsCount === 0) {
       return res.status(404).json({ msg: 'Product not found' });
     }
 
+    console.log('=== DELETE PRODUCT END ===');
     res.json({ msg: 'Product removed successfully' });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('DELETE PRODUCT ERROR:', err.message);
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -201,7 +267,7 @@ router.delete('/', async (req, res) => {
     res.json({ msg: `${deletedRowsCount} products removed successfully.` });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
