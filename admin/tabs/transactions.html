@@ -1,0 +1,72 @@
+<!-- Transactions Tab Content -->
+<section class="transactions-section" id="transactionsSection">
+    <div class="section-header">
+        <div class="header-left">
+            <h2><i class="fas fa-history"></i> Transaction History</h2>
+            <p>Track all admin actions on inventory management</p>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-secondary" id="refreshTransactionsBtn" aria-label="Refresh transactions">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="transactions-controls">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All Transactions</button>
+            <button class="filter-tab" data-filter="stock_in">Stock In</button>
+            <button class="filter-tab" data-filter="stock_out">Stock Out</button>
+        </div>
+
+        <div class="search-filter">
+            <div class="search-input">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search transactions..." id="transactionSearch">
+            </div>
+            <select class="filter-select" id="actionFilter">
+                <option value="">All Actions</option>
+                <option value="add">Add</option>
+                <option value="edit">Edit</option>
+                <option value="delete">Delete</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="transactions-table-container">
+        <table class="transactions-table" id="transactionsTable">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Transaction ID</th>
+                    <th>Action</th>
+                    <th>Type</th>
+                    <th>Product</th>
+                    <th>Details</th>
+                    <th>Stock Change</th>
+                </tr>
+            </thead>
+            <tbody id="transactionsTableBody">
+                <!-- Transactions will be loaded here -->
+                <tr>
+                    <td colspan="7" class="loading-row">
+                        <div class="loading-spinner">Loading transactions...</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-container" id="paginationContainer" style="display: none;">
+        <div class="pagination-info" id="paginationInfo"></div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary" id="prevPageBtn" disabled>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <span class="page-numbers" id="pageNumbers"></span>
+            <button class="btn btn-secondary" id="nextPageBtn" disabled>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</section>

@@ -1,5 +1,5 @@
 // Customers Tab Module
-(function() {
+const CustomersTab = (function() {
     'use strict';
 
     // State
@@ -16,7 +16,9 @@
     async function loadData() {
         try {
             const users = await window.AdminAPI.getUsers();
+            console.log('All users:', users);
             state.customers = users.filter(user => !user.isAdmin);
+            console.log('Filtered customers:', state.customers);
             renderCustomers(state.customers);
         } catch (error) {
             console.error('Error loading customers:', error);
@@ -64,11 +66,16 @@
     }
 
     // Export public API
-    window.CustomersTab = {
+    const publicAPI = {
         init: init,
         loadData: loadData,
         viewCustomer: viewCustomer,
         editCustomer: editCustomer
     };
 
+    return publicAPI;
+
 })();
+
+// Export as default for ES6 modules
+export default CustomersTab;

@@ -89,14 +89,17 @@ const loginUser = async (req, res) => {
 // @route   GET /api/users
 // @access  Private/Admin
 const getUsers = async (req, res) => {
-  try {
-    const users = await User.findAll({
-      attributes: { exclude: ['password'] }
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
-  }
+    try {
+        const users = await User.findAll({
+            attributes: { exclude: ['password'] }
+        });
+        console.log('Users found:', users.length);
+        console.log('Users:', users.map(u => ({ id: u.id, name: u.name, email: u.email, isAdmin: u.isAdmin })));
+        res.json(users);
+    } catch (error) {
+        console.error('Error getting users:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
 };
 
 module.exports = {

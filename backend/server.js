@@ -30,9 +30,14 @@ const sequelize = new Sequelize(
 );
 
 // Test the connection
+console.log(`Attempting to connect to MySQL at ${process.env.DB_HOST}:${process.env.DB_PORT} with user ${process.env.DB_USER} and database ${process.env.DB_NAME}`);
 sequelize.authenticate()
     .then(() => console.log('MySQL connected successfully.'))
-    .catch(err => console.error('MySQL connection error:', err));
+    .catch(err => {
+        console.error('MySQL connection error:', err);
+        console.error('Error code:', err.original ? err.original.code : err.code);
+        console.error('Ensure MySQL server is running and credentials are correct.');
+    });
 
 // Export sequelize instance for use in models
 global.sequelize = sequelize;
@@ -41,6 +46,7 @@ module.exports = { sequelize };
 // Require all models to ensure they are registered BEFORE sync
 require('./models/userModel');
 require('./models/Product');
+require('./models/Transaction');
 require('./models/cartModel');
 require('./models/orderModel');
 require('./models/Payment');
@@ -52,6 +58,7 @@ sequelize.sync({ alter: true }) // Use alter to update schema without losing dat
 
 // Import routes AFTER models are loaded
 const productRoutes = require('./routes/ProductRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -67,14 +74,20 @@ app.use(express.json()); // To parse incoming JSON requests
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static('uploads'));
 
-// Serve admin static files
-app.use('/admin', express.static('../admin'));
-
-// Serve admin index.html directly
+// Serve admin index.html directly (before static serving to avoid conflicts)
 app.get('/admin/index.html', (req, res) => {
     console.log('Request received for /admin/index.html');
     res.sendFile('admin/index.html', { root: __dirname + '/..' });
 });
+
+// Serve admin static files (must be before main site to avoid conflicts)
+app.use('/admin', (req, res, next) => {
+    console.log(`Admin static request: ${req.path}`);
+    express.static('../admin')(req, res, next);
+});
+
+// Serve main site static files
+app.use(express.static('../'));
 
 // Redirect old admin.html to new admin structure
 app.get('/admin.html', (req, res) => {
@@ -93,6 +106,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/products', productRoutes);
+app.use('/api/transactions', transactionRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);

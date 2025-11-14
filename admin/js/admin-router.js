@@ -68,7 +68,7 @@
                 globalSearch.addEventListener('input', (e) => {
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(() => {
-                        performGlobalSearch(e.target.value);
+                        this.performGlobalSearch(e.target.value);
                     }, 300);
                 });
             }
@@ -77,7 +77,7 @@
             const notificationBtn = document.getElementById('notificationBtn');
             if (notificationBtn) {
                 notificationBtn.addEventListener('click', () => {
-                    toggleNotifications();
+                    this.toggleNotifications();
                 });
             }
         }
@@ -164,6 +164,12 @@
                 console.log(`Loading JS module for tab: ${tabName}`);
                 const jsModule = await import(`/admin/js/tabs/${tabName}.js`);
                 console.log(`JS module loaded for ${tabName}:`, jsModule);
+                console.log(`JS module keys:`, Object.keys(jsModule));
+                console.log(`JS module default:`, jsModule.default);
+                if (jsModule.default) {
+                    console.log(`Default export type:`, typeof jsModule.default);
+                    console.log(`Default export keys:`, Object.keys(jsModule.default || {}));
+                }
 
                 // Update content
                 tabContentContainer.innerHTML = html;
@@ -178,6 +184,7 @@
                     jsModule.init();
                 } else {
                     console.warn(`No init function found for ${tabName} tab`);
+                    console.log(`Checking window object for ${tabName}Tab:`, window[tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Tab']);
                 }
 
                 // Also attach to window for backward compatibility
