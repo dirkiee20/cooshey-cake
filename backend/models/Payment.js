@@ -22,7 +22,7 @@ const Payment = sequelize.define('Payment', {
     allowNull: false,
   },
   paymentMethod: {
-    type: DataTypes.ENUM('gcash'),
+    type: DataTypes.ENUM('gcash', 'bank-transfer', 'paymaya', 'other'),
     defaultValue: 'gcash',
   },
   status: {

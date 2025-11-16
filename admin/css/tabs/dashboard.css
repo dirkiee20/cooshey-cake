@@ -92,3 +92,34 @@
 .error-state button:hover {
     background: var(--primary-dark);
 }
+
+/* Loading states for progressive loading */
+.stats-grid.loading {
+    position: relative;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.stats-grid.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.stats-grid.loading::before {
+    content: '';
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--gray-300);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}

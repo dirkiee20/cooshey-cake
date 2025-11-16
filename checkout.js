@@ -92,13 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const address = document.getElementById('address').value;
+        const street = document.getElementById('street').value;
+        const city = document.getElementById('city').value;
+        const province = document.getElementById('province').value;
+        const postal = document.getElementById('postal').value;
         const contact = document.getElementById('contact').value;
 
-        if (!address || !contact) {
+        if (!street || !city || !province || !postal || !contact) {
             alert('Please fill out all shipping information.');
             return;
         }
+
+        const address = `${street}, ${city}, ${province} ${postal}`;
 
         if (currentTotal <= 0) {
             alert('Your cart is empty.');
@@ -136,9 +141,34 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear checkout items from localStorage after successful order
             localStorage.removeItem('checkoutItems');
 
-            // Redirect to payment page with order ID to upload receipt
+            // Get order ID
             const orderId = orderData.order.id || orderData.id;
-            window.location.href = `payment.html?orderId=${orderId}`;
+
+            // Calculate totals for payment proof page
+            const subtotal = checkoutItems
+                .filter(item => item.product)
+                .reduce((sum, item) => sum + parseFloat(item.product.price) * item.quantity, 0);
+            const taxes = subtotal * 0.10;
+            const total = subtotal + taxes;
+
+            // Store order data for payment proof page
+            const orderDataForProof = {
+                orderId: orderId,
+                items: checkoutItems,
+                shipping: { address, contact },
+                totals: { subtotal, tax: taxes, total }
+            };
+
+            console.log('Storing order data for payment proof:', orderDataForProof);
+            localStorage.setItem('currentOrder', JSON.stringify(orderDataForProof));
+
+            // Clear checkout items from localStorage
+            localStorage.removeItem('checkoutItems');
+
+            // Small delay to ensure localStorage is set before redirect
+            setTimeout(() => {
+                window.location.href = 'payment-proof.html';
+            }, 100);
 
         } catch (error) {
             console.error('Error processing order:', error);
@@ -174,3 +204,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial fetch of the cart summary
     loadCheckoutData();
 });
+

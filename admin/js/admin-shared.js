@@ -246,6 +246,10 @@
             return await this.request('/orders');
         },
 
+        async getOrderById(orderId) {
+            return await this.request(`/orders/${orderId}`);
+        },
+
         async updateOrderStatus(orderId, status) {
             return await this.request(`/orders/${orderId}/status`, {
                 method: 'PUT',
@@ -280,6 +284,18 @@
         // Stock Transactions
         async getStockTransactions() {
             return await this.request('/stock-transactions');
+        },
+
+        async makeUserAdmin(userId) {
+            return await this.request(`/users/${userId}/admin`, {
+                method: 'PUT'
+            });
+        },
+
+        async makeCurrentUserAdmin() {
+            return await this.request('/users/make-admin', {
+                method: 'POST'
+            });
         },
 
         async createStockTransaction(transactionData) {
@@ -464,6 +480,21 @@
         performanceUtils.lazyLoadImages();
         accessibilityUtils.handleKeyboardNavigation();
     });
+
+    // Expose makeCurrentUserAdmin globally for console access
+    window.makeMeAdmin = async function() {
+        try {
+            const result = await api.makeCurrentUserAdmin();
+            console.log('Admin status granted:', result);
+            alert('You are now an admin! Admin status is checked from database on every request.');
+            // No need to refresh - admin status is checked from database, not cached in token
+            return result;
+        } catch (error) {
+            console.error('Failed to make admin:', error);
+            alert('Failed to make admin. Check console for details.');
+            throw error;
+        }
+    };
 
     // Make globally available
     window.AdminUtils = { ...utils, ...performanceUtils, ...accessibilityUtils };

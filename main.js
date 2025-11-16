@@ -152,7 +152,14 @@ document.addEventListener("DOMContentLoaded", function () {
     loginPopupBtn.style.display = 'inline-block';
     userDropdown.style.display = 'none';
     loginPopupBtn.addEventListener('click', () => {
-        if (loginRegisterModal) loginRegisterModal.style.display = 'flex';
+        console.log('Sign-in button clicked');
+        console.log('Modal element:', loginRegisterModal);
+        if (loginRegisterModal) {
+            loginRegisterModal.style.display = 'flex';
+            console.log('Modal display set to flex');
+        } else {
+            console.log('Modal not found');
+        }
     });
   }
 
@@ -197,10 +204,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      console.log('Login form submitted');
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
+      console.log('Email:', email, 'Password length:', password.length);
 
       try {
+          console.log('Sending login request to:', `${API_URL}/login`);
           const response = await fetch(`${API_URL}/login`, {
               method: 'POST',
               headers: {
@@ -208,8 +218,10 @@ document.addEventListener("DOMContentLoaded", function () {
               },
               body: JSON.stringify({ email, password })
           });
+          console.log('Response status:', response.status);
 
           const data = await response.json();
+          console.log('Response data:', data);
 
           if (!response.ok) {
               throw new Error(data.message || 'Failed to login');
@@ -220,6 +232,7 @@ document.addEventListener("DOMContentLoaded", function () {
           localStorage.setItem('userInfo', JSON.stringify(data)); // Store the whole user object
 
           alert('Login successful!');
+          console.log('Login successful, reloading page');
           window.location.reload();
 
       } catch (error) {
@@ -387,9 +400,10 @@ document.addEventListener("DOMContentLoaded", function () {
       stockEl.textContent = `In Stock: ${product.stock} available`;
       stockEl.className = 'in-stock';
 
-      // Show in-stock buttons and hide pre-order
-      addToCartBtn.style.display = 'inline-block';
+      // Show only Buy Now button and hide Add to Cart and pre-order
+      addToCartBtn.style.display = 'none';
       reserveBtn.style.display = 'inline-block';
+      reserveBtn.textContent = 'Buy Now'; // Change text from "Reserve Now" to "Buy Now"
       preOrderBtn.style.display = 'none';
       quantityContainer.style.display = 'block';
 
@@ -398,7 +412,6 @@ document.addEventListener("DOMContentLoaded", function () {
       quantityMinusBtn.disabled = true;
 
       // Set data attributes for actions
-      addToCartBtn.dataset.productId = product.id;
       reserveBtn.dataset.productId = product.id;
     } else {
       stockEl.textContent = 'Out of Stock';
@@ -432,10 +445,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const isReserveButton = buyNowBtn.closest('#view-product-modal');
 
     if (isReserveButton) {
-      // This is the "Reserve Now" button. Add item(s) to cart and go to checkout.
+      // This is the "Buy Now" button. Create checkout item directly and go to checkout.
       const userToken = localStorage.getItem('userToken');
       if (!userToken) {
-          alert('Please login to reserve items.');
+          alert('Please login to purchase items.');
           const loginRegisterModal = document.getElementById('login-register-modal');
           if (loginRegisterModal) loginRegisterModal.style.display = 'flex';
           return;
@@ -446,25 +459,27 @@ document.addEventListener("DOMContentLoaded", function () {
       const quantity = parseInt(quantityInput.value, 10);
 
       try {
-        const response = await fetch('http://localhost:3001/api/cart', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({ productId, quantity })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to add item to cart');
+        // Fetch the complete product details
+        const productResponse = await fetch(`http://localhost:3001/api/products/${productId}`);
+        if (!productResponse.ok) {
+          throw new Error('Product not found');
         }
+        const product = await productResponse.json();
 
-        // On success, redirect to checkout
+        // Create checkout item directly (skip cart storage)
+        const checkoutItem = {
+          product: product,
+          quantity: quantity
+        };
+
+        // Store for checkout page
+        localStorage.setItem('checkoutItems', JSON.stringify([checkoutItem]));
+
+        // Redirect directly to checkout
         window.location.href = 'checkout.html';
 
       } catch (error) {
-        console.error('Reserve now error:', error);
+        console.error('Buy now error:', error);
         alert(`Error: ${error.message}`);
       }
     } else {

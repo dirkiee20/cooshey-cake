@@ -36,8 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const cart = await response.json();
             allCartItems = cart.items; // Store all items
-            renderCart(allCartItems);
+
+            // Select all items by default for checkout
+            const allProductIds = allCartItems.map(item => String(item.product.id));
+            renderCart(allCartItems, allProductIds);
             updateSummary(); // Calculate summary based on selection
+
+            // Update select all checkbox to be checked
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allCartItems.length > 0;
+            }
 
         } catch (error) {
             console.error('Error fetching cart:', error);
@@ -205,6 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
             allCartItems = updatedCart.items; // Update the master list
             renderCart(allCartItems, selectedIds);
             updateSummary(); // Recalculate summary based on selections
+
+            // Update select all checkbox state
+            if (selectAllCheckbox) {
+                const allCheckboxes = cartGrid.querySelectorAll('.item-checkbox');
+                const allChecked = [...allCheckboxes].every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked && allCheckboxes.length > 0;
+            }
 
         } catch (error) {
             console.error('Error updating cart:', error);

@@ -1,36 +1,36 @@
 <!-- Payments Tab Content -->
-<section class="payments-section" id="paymentsSection">
+<section class="payments-section" id="paymentsSection" role="tabpanel" aria-labelledby="paymentsTab">
     <div class="section-header">
         <div class="header-left">
-            <h2><i class="fas fa-credit-card"></i> Payment Management</h2>
+            <h2><i class="fas fa-credit-card" aria-hidden="true"></i> Payment Management</h2>
             <p>Review and confirm customer payment proofs</p>
         </div>
         <div class="header-right">
-            <div class="stats-cards">
+            <div class="stats-cards" role="group" aria-label="Payment statistics">
                 <div class="stat-card">
                     <div class="stat-icon pending">
-                        <i class="fas fa-clock"></i>
+                        <i class="fas fa-clock" aria-hidden="true"></i>
                     </div>
                     <div class="stat-info">
-                        <span class="stat-number" id="pendingCount">0</span>
+                        <span class="stat-number" id="pendingCount" aria-live="polite">0</span>
                         <span class="stat-label">Pending</span>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon confirmed">
-                        <i class="fas fa-check"></i>
+                        <i class="fas fa-check" aria-hidden="true"></i>
                     </div>
                     <div class="stat-info">
-                        <span class="stat-number" id="confirmedCount">0</span>
+                        <span class="stat-number" id="confirmedCount" aria-live="polite">0</span>
                         <span class="stat-label">Confirmed</span>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon rejected">
-                        <i class="fas fa-times"></i>
+                        <i class="fas fa-times" aria-hidden="true"></i>
                     </div>
                     <div class="stat-info">
-                        <span class="stat-number" id="rejectedCount">0</span>
+                        <span class="stat-number" id="rejectedCount" aria-live="polite">0</span>
                         <span class="stat-label">Rejected</span>
                     </div>
                 </div>
@@ -39,23 +39,415 @@
     </div>
 
     <div class="payments-controls">
-        <div class="filter-tabs">
-            <button class="filter-tab active" data-filter="all">All Payments</button>
-            <button class="filter-tab" data-filter="pending">Pending</button>
-            <button class="filter-tab" data-filter="confirmed">Confirmed</button>
-            <button class="filter-tab" data-filter="rejected">Rejected</button>
+        <div class="filter-tabs" role="tablist" aria-label="Payment filter tabs">
+            <button class="filter-tab active" role="tab" data-filter="all" aria-selected="true" aria-controls="paymentsGrid" id="tab-all">
+                All Payments
+            </button>
+            <button class="filter-tab" role="tab" data-filter="pending" aria-selected="false" aria-controls="paymentsGrid" id="tab-pending">
+                Pending <span class="badge" id="badge-pending">0</span>
+            </button>
+            <button class="filter-tab" role="tab" data-filter="confirmed" aria-selected="false" aria-controls="paymentsGrid" id="tab-confirmed">
+                Confirmed
+            </button>
+            <button class="filter-tab" role="tab" data-filter="rejected" aria-selected="false" aria-controls="paymentsGrid" id="tab-rejected">
+                Rejected
+            </button>
         </div>
 
-        <div class="search-filter">
+        <div class="search-filter-row">
             <div class="search-input">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search by order ID..." id="paymentSearch">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input 
+                    type="text" 
+                    placeholder="Search by order ID, customer name..." 
+                    id="paymentSearch"
+                    aria-label="Search payments"
+                    autocomplete="off"
+                >
+                <button type="button" class="clear-search" id="clearSearch" aria-label="Clear search" style="display: none;">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="date-filter">
+                <select id="dateRange" aria-label="Filter by date range">
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">Last 7 Days</option>
+                    <option value="month">Last 30 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+
+            <div class="sort-control">
+                <label for="sortBy" class="sr-only">Sort by</label>
+                <select id="sortBy" aria-label="Sort payments">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="amount-high">Amount: High to Low</option>
+                    <option value="amount-low">Amount: Low to High</option>
+                </select>
+            </div>
+
+            <button class="btn-export" id="exportBtn" aria-label="Export payments to CSV">
+                <i class="fas fa-download" aria-hidden="true"></i>
+                Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;" role="region" aria-label="Bulk actions">
+        <div class="bulk-info">
+            <span class="selected-count" id="selectedCount">0</span> 
+            <span>selected</span>
+            <button type="button" class="btn-clear-selection" id="clearSelection" aria-label="Clear selection">
+                Clear
+            </button>
+        </div>
+        <div class="bulk-actions">
+            <button class="btn-bulk btn-bulk-confirm" id="bulkConfirm" aria-label="Confirm selected payments">
+                <i class="fas fa-check" aria-hidden="true"></i>
+                Confirm Selected
+            </button>
+            <button class="btn-bulk btn-bulk-reject" id="bulkReject" aria-label="Reject selected payments">
+                <i class="fas fa-times" aria-hidden="true"></i>
+                Reject Selected
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Date Range Modal -->
+    <div id="dateRangeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="dateRangeTitle" style="display: none;">
+        <div class="modal-overlay" data-dismiss="modal"></div>
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3 id="dateRangeTitle">Select Date Range</h3>
+                <button type="button" class="btn-close-modal" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate" name="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate" name="endDate" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="applyDateRange">Apply</button>
             </div>
         </div>
     </div>
 
-    <div class="payments-grid" id="paymentsGrid">
-        <!-- Payments will be loaded here -->
-        <div class="loading-spinner">Loading payments...</div>
+    <!-- Payments Grid -->
+    <div class="payments-container">
+        <div class="payments-grid" id="paymentsGrid">
+            <!-- Payments will be loaded here -->
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state" id="loadingState" style="display: none;" role="status" aria-live="polite">
+            <div class="spinner"></div>
+            <p>Loading payments...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-inbox" aria-hidden="true"></i>
+            </div>
+            <h3>No Payments Found</h3>
+            <p>There are no payment proofs matching your current filters.</p>
+            <button class="btn btn-secondary" id="resetFilters">Reset Filters</button>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-state" id="errorState" style="display: none;" role="alert">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+            </div>
+            <h3>Failed to Load Payments</h3>
+            <p id="errorMessage">An error occurred while loading payment data.</p>
+            <button class="btn btn-primary" id="retryLoad">
+                <i class="fas fa-redo" aria-hidden="true"></i>
+                Retry
+            </button>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paymentsPaginationContainer" style="display: none;" role="navigation" aria-label="Payments Pagination">
+            <div class="pagination-info" id="paymentsPaginationInfo">
+                Showing 0 of 0 payments
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-page" id="paymentsPrevPageBtn" aria-label="Previous page" disabled>
+                    <i class="fas fa-angle-left" aria-hidden="true"></i>
+                </button>
+                <div class="page-numbers" id="paymentsPageNumbers" role="group" aria-label="Page selection">
+                    <!-- Page numbers will be inserted here -->
+                </div>
+                <button class="btn-page" id="paymentsNextPageBtn" aria-label="Next page" disabled>
+                    <i class="fas fa-angle-right" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+            <div class="pagination-info">
+                Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalResults">0</span> results
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-page" id="firstPage" aria-label="First page" disabled>
+                    <i class="fas fa-angle-double-left" aria-hidden="true"></i>
+                </button>
+                <button class="btn-page" id="prevPage" aria-label="Previous page" disabled>
+                    <i class="fas fa-angle-left" aria-hidden="true"></i>
+                </button>
+                <div class="page-numbers" id="pageNumbers" role="group" aria-label="Page selection">
+                    <!-- Page numbers will be inserted here -->
+                </div>
+                <button class="btn-page" id="nextPage" aria-label="Next page">
+                    <i class="fas fa-angle-right" aria-hidden="true"></i>
+                </button>
+                <button class="btn-page" id="lastPage" aria-label="Last page">
+                    <i class="fas fa-angle-double-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="page-size-control">
+                <label for="pageSize">Show:</label>
+                <select id="pageSize" aria-label="Results per page">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span>per page</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Detail Modal -->
+    <div id="paymentDetailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="paymentDetailTitle" style="display: none;">
+        <div class="modal-overlay" data-dismiss="modal"></div>
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="paymentDetailTitle">Payment Proof Details</h3>
+                <button type="button" class="btn-close-modal" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-detail-grid">
+                    <!-- Left Column: Order Info -->
+                    <div class="detail-section">
+                        <h4>Order Information</h4>
+                        <div class="detail-row">
+                            <span class="detail-label">Order ID:</span>
+                            <span class="detail-value" id="detailOrderId">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Customer:</span>
+                            <span class="detail-value" id="detailCustomer">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Order Amount:</span>
+                            <span class="detail-value" id="detailOrderAmount">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Order Date:</span>
+                            <span class="detail-value" id="detailOrderDate">-</span>
+                        </div>
+
+                        <h4>Payment Information</h4>
+                        <div class="detail-row">
+                            <span class="detail-label">Payment Method:</span>
+                            <span class="detail-value" id="detailPaymentMethod">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Reference Number:</span>
+                            <span class="detail-value" id="detailReference">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Submitted:</span>
+                            <span class="detail-value" id="detailSubmitted">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value">
+                                <span class="status-badge" id="detailStatus">-</span>
+                            </span>
+                        </div>
+
+                        <div class="detail-row" id="detailNotesRow" style="display: none;">
+                            <span class="detail-label">Customer Notes:</span>
+                            <span class="detail-value" id="detailNotes">-</span>
+                        </div>
+
+                        <!-- Fraud Detection Indicators -->
+                        <div id="fraudWarnings" style="display: none;">
+                            <h4><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Fraud Alerts</h4>
+                            <div class="alert alert-warning" role="alert">
+                                <ul id="fraudList"></ul>
+                            </div>
+                        </div>
+
+                        <!-- Status History -->
+                        <div id="statusHistory">
+                            <h4>Status History</h4>
+                            <div class="timeline" id="statusTimeline">
+                                <!-- Timeline items will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Receipt Image -->
+                    <div class="detail-section receipt-section">
+                        <h4>Payment Receipt</h4>
+                        <div class="receipt-viewer">
+                            <img id="receiptImage" src="" alt="Payment receipt" loading="lazy">
+                            <div class="receipt-actions">
+                                <button class="btn-icon" id="zoomIn" aria-label="Zoom in">
+                                    <i class="fas fa-search-plus" aria-hidden="true"></i>
+                                </button>
+                                <button class="btn-icon" id="zoomOut" aria-label="Zoom out">
+                                    <i class="fas fa-search-minus" aria-hidden="true"></i>
+                                </button>
+                                <button class="btn-icon" id="downloadReceipt" aria-label="Download receipt">
+                                    <i class="fas fa-download" aria-hidden="true"></i>
+                                </button>
+                                <button class="btn-icon" id="fullScreen" aria-label="View fullscreen">
+                                    <i class="fas fa-expand" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-footer-split">
+                <div class="admin-notes-section" id="adminNotesSection" style="display: none;">
+                    <label for="adminNotes">Admin Notes (Internal):</label>
+                    <textarea 
+                        id="adminNotes" 
+                        rows="2" 
+                        placeholder="Add internal notes about this payment..."
+                        maxlength="500"
+                    ></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="rejectPaymentBtn">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                        Reject
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmPaymentBtn">
+                        <i class="fas fa-check" aria-hidden="true"></i>
+                        Confirm Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Reason Modal -->
+    <div id="rejectionModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="rejectionTitle" style="display: none;">
+        <div class="modal-overlay" data-dismiss="modal"></div>
+        <div class="modal-content modal-medium">
+            <div class="modal-header">
+                <h3 id="rejectionTitle">Reject Payment</h3>
+                <button type="button" class="btn-close-modal" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Please select a reason for rejecting this payment proof:</p>
+                <form id="rejectionForm">
+                    <div class="form-group">
+                        <label class="radio-label">
+                            <input type="radio" name="rejectionReason" value="unclear" required>
+                            <span>Receipt image is unclear or unreadable</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="rejectionReason" value="amount-mismatch" required>
+                            <span>Amount doesn't match order total</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="rejectionReason" value="invalid-method" required>
+                            <span>Invalid payment method</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="rejectionReason" value="duplicate" required>
+                            <span>Duplicate or previously used receipt</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="rejectionReason" value="fraud" required>
+                            <span>Suspected fraud or manipulation</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="rejectionReason" value="other" required>
+                            <span>Other (please specify)</span>
+                        </label>
+                    </div>
+                    <div class="form-group" id="otherReasonGroup" style="display: none;">
+                        <label for="otherReason">Please specify:</label>
+                        <textarea 
+                            id="otherReason" 
+                            rows="3" 
+                            placeholder="Enter reason for rejection..."
+                            maxlength="500"
+                        ></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="notifyCustomer" checked>
+                            Send notification email to customer
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmRejection">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                    Confirm Rejection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmationTitle" style="display: none;">
+        <div class="modal-overlay" data-dismiss="modal"></div>
+        <div class="modal-content modal-medium">
+            <div class="modal-header">
+                <h3 id="confirmationTitle">Confirm Payment</h3>
+                <button type="button" class="btn-close-modal" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to confirm this payment?</p>
+                <div class="confirmation-summary">
+                    <p><strong>Order ID:</strong> <span id="confirmOrderId">-</span></p>
+                    <p><strong>Amount:</strong> <span id="confirmAmount">-</span></p>
+                    <p><strong>Customer:</strong> <span id="confirmCustomer">-</span></p>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="notifyCustomerConfirm" checked>
+                        Send confirmation email to customer
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmPaymentAction">
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                    Confirm Payment
+                </button>
+            </div>
+        </div>
     </div>
 </section>

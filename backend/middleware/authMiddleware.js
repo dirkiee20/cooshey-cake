@@ -35,10 +35,27 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-const admin = (req, res, next) => {
-  if (req.user && req.user.isAdmin) {
-    next();
-  } else {
+const admin = async (req, res, next) => {
+  try {
+    if (!req.user || !req.user.id) {
+      res.status(401);
+      throw new Error('Not authorized');
+    }
+
+    // Always check admin status from database, not from cached JWT
+    const User = require('../models/userModel');
+    const user = await User.findByPk(req.user.id);
+
+    if (user && user.isAdmin) {
+      // Update req.user with fresh data from database
+      req.user = user.toJSON();
+      next();
+    } else {
+      res.status(401);
+      throw new Error('Not authorized as an admin');
+    }
+  } catch (error) {
+    console.error('Admin middleware error:', error);
     res.status(401);
     throw new Error('Not authorized as an admin');
   }

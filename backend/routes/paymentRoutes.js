@@ -7,12 +7,14 @@ const { protect, admin } = require('../middleware/authMiddleware');
 // Create payment record
 router.post('/', async (req, res) => {
   try {
-    const { orderId, amount } = req.body;
-    console.log('Creating payment record:', { orderId, amount });
+    const { orderId, amount, paymentMethod, notes } = req.body;
+    console.log('Creating payment record:', { orderId, amount, paymentMethod, notes });
 
     const payment = await Payment.create({
       orderId,
       amount,
+      paymentMethod: paymentMethod || 'gcash',
+      notes,
       status: 'pending'
     });
 
@@ -29,9 +31,17 @@ router.post('/:id/proof', upload.single('receipt'), async (req, res) => {
   try {
     const paymentId = req.params.id;
     const receiptImageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-    const { reference } = req.body;
+    const { reference, payment_method, notes } = req.body;
 
-    console.log('Uploading payment proof:', { paymentId, receiptImageUrl, reference });
+    console.log('Uploading payment proof:', {
+      paymentId,
+      hasFile: !!req.file,
+      fileName: req.file?.filename,
+      receiptImageUrl,
+      reference,
+      payment_method,
+      notes
+    });
 
     const updateData = {
       receiptImageUrl,
@@ -40,6 +50,14 @@ router.post('/:id/proof', upload.single('receipt'), async (req, res) => {
 
     if (reference) {
       updateData.gcashReference = reference;
+    }
+
+    if (payment_method) {
+      updateData.paymentMethod = payment_method;
+    }
+
+    if (notes) {
+      updateData.notes = notes;
     }
 
     await Payment.update(updateData, {

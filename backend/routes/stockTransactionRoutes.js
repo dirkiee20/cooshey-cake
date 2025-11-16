@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Get all stock transactions
-router.get('/', protect, admin, async (req, res) => {
+router.get('/', protect, async (req, res) => {
     try {
         console.log('Getting stock transactions...');
         const transactions = await StockTransaction.findAll({
