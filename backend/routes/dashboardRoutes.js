@@ -6,9 +6,10 @@ const User = require('../models/userModel');
 const Log = require('../models/Log');
 const Payment = require('../models/Payment');
 const { Op, fn, col, literal } = require('sequelize');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // Get dashboard stats
-router.get('/stats', async (req, res) => {
+router.get('/stats', protect, admin, async (req, res) => {
   try {
     // Get date range (default to last 30 days)
     const endDate = new Date();
@@ -58,7 +59,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // Get recent activity
-router.get('/activity', async (req, res) => {
+router.get('/activity', protect, admin, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
 
@@ -89,7 +90,7 @@ router.get('/activity', async (req, res) => {
 });
 
 // Get sales chart data
-router.get('/sales-chart', async (req, res) => {
+router.get('/sales-chart', protect, admin, async (req, res) => {
   try {
     const period = req.query.period || '7d';
     let labels, data, dateCondition, groupBy;
@@ -201,7 +202,7 @@ router.get('/sales-chart', async (req, res) => {
 });
 
 // Get products chart data (most popular products)
-router.get('/products-chart', async (req, res) => {
+router.get('/products-chart', protect, admin, async (req, res) => {
   try {
     // Get top 5 products by sales from order items
     const productSales = await OrderItem.findAll({

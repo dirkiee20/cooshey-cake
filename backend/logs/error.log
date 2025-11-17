@@ -1,0 +1,10 @@
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:39:19.405Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:40:19.275Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:40:43.115Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:41:12.671Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:42:43.606Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:26.875Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:55.034Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:02:01.320Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:12.134Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:17.254Z"}

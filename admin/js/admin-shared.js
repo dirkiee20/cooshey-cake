@@ -318,6 +318,7 @@
 
         logout() {
             localStorage.removeItem(CONFIG.TOKEN_KEY);
+            localStorage.removeItem('userInfo');
             window.location.href = '/';
         },
 

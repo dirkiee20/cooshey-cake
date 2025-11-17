@@ -1,0 +1,44 @@
+{"endpoint":"/api/users/","errors":[{"location":"body","msg":"Password must be between 8 and 12 characters long","path":"password","type":"field","value":"weak"},{"location":"body","msg":"Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character","path":"password","type":"field","value":"weak"}],"ip":"::1","level":"warn","message":"Validation failed","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:21:40.856Z"}
+{"endpoint":"/api/users/","errors":[{"location":"body","msg":"Password must be between 8 and 12 characters long","path":"password","type":"field","value":"StrongPass123!"}],"ip":"::1","level":"warn","message":"Validation failed","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:21:51.931Z"}
+{"email":"test@example.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:39:19.033Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:39:19.405Z"}
+{"email":"test@example.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:40:19.042Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:40:19.275Z"}
+{"email":"test@example.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:40:42.834Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:40:43.115Z"}
+{"email":"test@example.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:41:12.417Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:41:12.671Z"}
+{"email":"test@example.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:42:43.336Z"}
+{"email":"test@example.com","error":"Unknown column 'failedAttempts' in 'field list'","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:42:43.606Z"}
+{"email":"test@example.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:58:23.406Z"}
+{"email":"test@example.com","ip":"::1","level":"warn","message":"Login failed - user not found","service":"cooshey-cake-backend","timestamp":"2025-11-17T02:58:23.439Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:19.030Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"warn","message":"Login failed - user not found","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:19.046Z"}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:26.872Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:26.875Z"}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:55.003Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:01:55.034Z"}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:02:01.317Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:02:01.320Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:02:07.813Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"warn","message":"Login failed - user not found","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:02:07.816Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:07.518Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"warn","message":"Login failed - user not found","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:07.520Z"}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:12.131Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:12.134Z"}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:17.252Z"}
+{"email":"dirk1@gmail.com","error":"user.matchPassword is not a function","ip":"::1","level":"error","message":"Login error","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:03:17.254Z"}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:05:31.326Z"}
+{"email":"dirk1@gmail.com","ip":"::1","isAdmin":1,"level":"info","message":"Login successful","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:05:31.597Z","userId":2}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:06:30.948Z"}
+{"email":"dirk1@gmail.com","ip":"::1","isAdmin":1,"level":"info","message":"Login successful","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:06:31.176Z","userId":2}
+{"email":"janincomon@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:07:18.466Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"warn","message":"Login failed - user not found","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:07:18.468Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:13:16.829Z"}
+{"email":"janincomon@gmail.com","ip":"::1","level":"warn","message":"Login failed - user not found","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:13:16.834Z"}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:13:21.209Z"}
+{"email":"dirk1@gmail.com","ip":"::1","isAdmin":1,"level":"info","message":"Login successful","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:13:21.456Z","userId":2}
+{"email":"armane@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:16:01.363Z"}
+{"email":"armane@gmail.com","ip":"::1","isAdmin":0,"level":"info","message":"Login successful","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:16:01.721Z","userId":5}
+{"email":"dirk1@gmail.com","ip":"::1","level":"info","message":"Login attempt","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:16:14.382Z"}
+{"email":"dirk1@gmail.com","ip":"::1","isAdmin":1,"level":"info","message":"Login successful","service":"cooshey-cake-backend","timestamp":"2025-11-17T03:16:14.628Z","userId":2}

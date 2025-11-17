@@ -241,11 +241,109 @@ document.addEventListener("DOMContentLoaded", function () {
       }
   });
 
+  // Password validation functions
+  const passwordRequirements = {
+      length: { regex: /^.{8,12}$/, element: 'req-length' },
+      uppercase: { regex: /[A-Z]/, element: 'req-uppercase' },
+      lowercase: { regex: /[a-z]/, element: 'req-lowercase' },
+      number: { regex: /\d/, element: 'req-number' },
+      special: { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, element: 'req-special' }
+  };
+
+  function validatePassword(password) {
+      let validCount = 0;
+      let allValid = true;
+
+      Object.keys(passwordRequirements).forEach(key => {
+          const req = passwordRequirements[key];
+          const element = document.getElementById(req.element);
+          const isValid = req.regex.test(password);
+
+          if (isValid) {
+              validCount++;
+              element.classList.remove('invalid');
+              element.classList.add('valid');
+          } else {
+              allValid = false;
+              element.classList.remove('valid');
+              element.classList.add('invalid');
+          }
+      });
+
+      return { validCount, allValid };
+  }
+
+  function updatePasswordStrength(password) {
+      const strengthBar = document.querySelector('.strength-bar');
+      const strengthText = document.querySelector('.strength-text');
+      const strengthContainer = document.querySelector('.password-strength');
+
+      const { validCount } = validatePassword(password);
+
+      // Remove all strength classes
+      strengthContainer.classList.remove('strength-weak', 'strength-fair', 'strength-good');
+
+      if (validCount <= 2) {
+          strengthContainer.classList.add('strength-weak');
+          strengthText.textContent = 'Weak';
+      } else if (validCount <= 4) {
+          strengthContainer.classList.add('strength-fair');
+          strengthText.textContent = 'Fair';
+      } else {
+          strengthContainer.classList.add('strength-good');
+          strengthText.textContent = 'Strong';
+      }
+  }
+
+  // Add password input event listener
+  const passwordInput = document.getElementById('register-password');
+  if (passwordInput) {
+      passwordInput.addEventListener('input', (e) => {
+          const password = e.target.value;
+          updatePasswordStrength(password);
+      });
+  }
+
+  // Password visibility toggle functionality
+  function initializePasswordToggles() {
+      const toggles = document.querySelectorAll('.password-toggle');
+
+      toggles.forEach(toggle => {
+          toggle.addEventListener('click', function() {
+              const container = this.closest('.password-input-container');
+              const input = container.querySelector('input[type="password"], input[type="text"]');
+              const icon = this.querySelector('i');
+
+              if (input.type === 'password') {
+                  input.type = 'text';
+                  icon.className = 'ri-eye-off-line';
+                  this.setAttribute('aria-label', 'Hide password');
+              } else {
+                  input.type = 'password';
+                  icon.className = 'ri-eye-line';
+                  this.setAttribute('aria-label', 'Show password');
+              }
+
+              // Trigger input event to update password strength if it's the register form
+              if (input.id === 'register-password') {
+                  input.dispatchEvent(new Event('input'));
+              }
+          });
+      });
+  }
+
+  // Initialize password toggles when DOM is loaded
+  initializePasswordToggles();
+
   registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('register-name').value;
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
+
+      // Clear any previous errors
+      const errorElement = document.getElementById('register-error');
+      errorElement.classList.remove('show');
 
       try {
           const response = await fetch(`${API_URL}/`, {
@@ -259,7 +357,15 @@ document.addEventListener("DOMContentLoaded", function () {
           const data = await response.json();
 
           if (!response.ok) {
-              throw new Error(data.message || 'Failed to register');
+              // Handle validation errors from backend
+              if (data.errors && Array.isArray(data.errors)) {
+                  const errorMessages = data.errors.map(err => err.msg).join(' ');
+                  errorElement.textContent = errorMessages;
+              } else {
+                  errorElement.textContent = data.message || 'Failed to register';
+              }
+              errorElement.className = 'error-message error show';
+              return;
           }
 
           localStorage.setItem('userToken', data.token);
@@ -268,7 +374,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       } catch (error) {
           console.error('Registration error:', error);
-          alert(`Registration failed: ${error.message}`);
+          errorElement.textContent = 'Network error. Please try again.';
+          errorElement.className = 'error-message error show';
       }
   });
 

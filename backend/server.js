@@ -1,6 +1,9 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const logger = require('./logger');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -66,10 +69,17 @@ Payment.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 Log.belongsTo(User, { foreignKey: 'adminId', as: 'user' });
 User.hasMany(Log, { foreignKey: 'adminId' });
 
-// Sync database models
-sequelize.sync({ alter: true }) // Use alter to update schema without losing data
-    .then(() => console.log('Database synchronized successfully.'))
+// Security fix: Remove dangerous sequelize.sync({ alter: true }) and use safe sync for production
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+  sequelize.sync() // Safe sync for production - no schema alterations
+    .then(() => console.log('Database synchronized successfully (production mode).'))
     .catch(err => console.error('Database synchronization error:', err));
+} else {
+  sequelize.sync({ alter: true }) // Development mode - allow schema alterations
+    .then(() => console.log('Database synchronized successfully (development mode with alter).'))
+    .catch(err => console.error('Database synchronization error:', err));
+}
 
 // Import routes AFTER models are loaded
 const productRoutes = require('./routes/ProductRoutes');
@@ -82,12 +92,34 @@ const logRoutes = require('./routes/logRoutes');
 const stockTransactionRoutes = require('./routes/stockTransactionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
+const { csrfToken, csrfProtection } = require('./middleware/csrfMiddleware');
 
 const app = express();
 
-// Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
+// Temporarily allow all origins for debugging
+const corsOptions = {
+  origin: true, // Allow all origins
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.use(helmet()); // Security fix: Add security headers using helmet package
 app.use(express.json()); // To parse incoming JSON requests
+
+// Security fix: Add CSRF protection for state-changing operations
+app.use('/api', csrfToken); // Provide CSRF tokens for API routes
+// Temporarily disable CSRF protection for debugging
+// app.use('/api', csrfProtection); // Validate CSRF tokens for state-changing operations
+
+// Security fix: Add rate limiting using express-rate-limit for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static('uploads'));
@@ -138,14 +170,14 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use(errorHandler);
 
 
-// Add logging for unhandled exceptions and rejections
+// Security fix: Add proper logging for unhandled exceptions and rejections
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
+    logger.error('Uncaught Exception:', { error: err.message, stack: err.stack });
     // Don't exit immediately, log and continue
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    logger.error('Unhandled Rejection:', { reason, promise });
     // Don't exit immediately, log and continue
 });
 

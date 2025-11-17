@@ -9,8 +9,8 @@ console.log('Order routes loaded successfully');
 // POST /api/orders - Create new order (must be before /:id route)
 router.post('/', protect, createOrder);
 
-// GET /api/orders - Get all orders (temporarily no auth for debug)
-router.get('/', getOrders);
+// GET /api/orders - Get all orders (admin only)
+router.get('/', protect, admin, getOrders);
 
 // GET /api/orders/:id - Get single order
 router.get('/:id', protect, getOrderById);

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Payment = require('../models/Payment');
-const upload = require('../middleware/uploadMiddleware');
+const { upload, scanUploadedFile } = require('../middleware/uploadMiddleware');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Create payment record
@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
 });
 
 // Upload payment proof
-router.post('/:id/proof', upload.single('receipt'), async (req, res) => {
+router.post('/:id/proof', upload.single('receipt'), scanUploadedFile, async (req, res) => {
   try {
     const paymentId = req.params.id;
     const receiptImageUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -90,8 +90,8 @@ router.get('/order/:orderId', async (req, res) => {
   }
 });
 
-// Get all payments (temporarily no auth for debug)
-router.get('/', async (req, res) => {
+// Get all payments (admin only)
+router.get('/', protect, admin, async (req, res) => {
     try {
         console.log('Getting payments...');
         const payments = await Payment.findAll({

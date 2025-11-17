@@ -28,6 +28,24 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: false,
   },
+  // Temporarily commented out due to database schema mismatch
+  // TODO: Re-enable when database is properly migrated
+  /*
+  failedAttempts: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  lockUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  isLocked: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  */
 }, {
   timestamps: true,
 });

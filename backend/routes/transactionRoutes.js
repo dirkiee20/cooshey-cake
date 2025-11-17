@@ -4,15 +4,16 @@ const {
   getTransactions,
   getTransactionById,
 } = require('../controllers/transactionController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // @route   GET /api/transactions
 // @desc    Get all transactions
-// @access  Private/Admin (temporarily no auth for debug)
-router.get('/', getTransactions);
+// @access  Private/Admin
+router.get('/', protect, admin, getTransactions);
 
 // @route   GET /api/transactions/:id
 // @desc    Get a single transaction by ID
 // @access  Private/Admin
-router.get('/:id', getTransactionById);
+router.get('/:id', protect, admin, getTransactionById);
 
 module.exports = router;
