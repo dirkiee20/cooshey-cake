@@ -14,28 +14,6 @@
     gap: var(--spacing-sm);
 }
 
-.filter-tab {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border: 1px solid var(--gray-300);
-    background: var(--white);
-    color: var(--gray-700);
-    border-radius: var(--radius-lg);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.filter-tab:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-.filter-tab.active {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--white);
-}
 
 .search-filter {
     display: flex;

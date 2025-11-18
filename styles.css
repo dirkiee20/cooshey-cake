@@ -1704,6 +1704,67 @@ footer {
     text-align: center;
 }
 
+/* Notifications */
+#notifications-modal .modal-content {
+  max-width: 500px;
+}
+
+#notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.notification-item {
+  padding: 15px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-item.unread {
+  background-color: var(--light-blue);
+}
+
+.notification-content p {
+  margin: 0 0 5px 0;
+  font-weight: 500;
+}
+
+.notification-content small {
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+.mark-read-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.mark-read-btn:hover {
+  background: var(--primary-color-dark);
+}
+
+#mark-all-read-btn {
+  width: 100%;
+  background: var(--success-color);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#mark-all-read-btn:hover {
+  background: var(--success-color-dark);
+}
+
 /* Footer */
 .payment-footer {
     text-align: center;

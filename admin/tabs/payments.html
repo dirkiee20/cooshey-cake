@@ -196,37 +196,6 @@
                 </button>
             </div>
         </div>
-            <div class="pagination-info">
-                Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalResults">0</span> results
-            </div>
-            <div class="pagination-controls">
-                <button class="btn-page" id="firstPage" aria-label="First page" disabled>
-                    <i class="fas fa-angle-double-left" aria-hidden="true"></i>
-                </button>
-                <button class="btn-page" id="prevPage" aria-label="Previous page" disabled>
-                    <i class="fas fa-angle-left" aria-hidden="true"></i>
-                </button>
-                <div class="page-numbers" id="pageNumbers" role="group" aria-label="Page selection">
-                    <!-- Page numbers will be inserted here -->
-                </div>
-                <button class="btn-page" id="nextPage" aria-label="Next page">
-                    <i class="fas fa-angle-right" aria-hidden="true"></i>
-                </button>
-                <button class="btn-page" id="lastPage" aria-label="Last page">
-                    <i class="fas fa-angle-double-right" aria-hidden="true"></i>
-                </button>
-            </div>
-            <div class="page-size-control">
-                <label for="pageSize">Show:</label>
-                <select id="pageSize" aria-label="Results per page">
-                    <option value="10">10</option>
-                    <option value="25" selected>25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-                <span>per page</span>
-            </div>
-        </div>
     </div>
 
     <!-- Payment Detail Modal -->
@@ -241,7 +210,6 @@
             </div>
             <div class="modal-body">
                 <div class="payment-detail-grid">
-                    <!-- Left Column: Order Info -->
                     <div class="detail-section">
                         <h4>Order Information</h4>
                         <div class="detail-row">
@@ -286,7 +254,6 @@
                             <span class="detail-value" id="detailNotes">-</span>
                         </div>
 
-                        <!-- Fraud Detection Indicators -->
                         <div id="fraudWarnings" style="display: none;">
                             <h4><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Fraud Alerts</h4>
                             <div class="alert alert-warning" role="alert">
@@ -294,7 +261,6 @@
                             </div>
                         </div>
 
-                        <!-- Status History -->
                         <div id="statusHistory">
                             <h4>Status History</h4>
                             <div class="timeline" id="statusTimeline">
@@ -303,7 +269,6 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: Receipt Image -->
                     <div class="detail-section receipt-section">
                         <h4>Payment Receipt</h4>
                         <div class="receipt-viewer">
@@ -337,15 +302,15 @@
                     ></textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" id="rejectPaymentBtn">
-                        <i class="fas fa-times" aria-hidden="true"></i>
-                        Reject
-                    </button>
                     <button type="button" class="btn btn-success" id="confirmPaymentBtn">
                         <i class="fas fa-check" aria-hidden="true"></i>
                         Confirm Payment
                     </button>
+                    <button type="button" class="btn btn-danger" id="rejectPaymentBtn">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                        Reject
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

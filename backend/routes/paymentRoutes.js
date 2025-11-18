@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Payment = require('../models/Payment');
+const Notification = require('../models/Notification');
+const { Order } = require('../models/orderModel');
 const upload = require('../middleware/uploadMiddleware');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -129,12 +131,38 @@ router.put('/:id/status', protect, admin, async (req, res) => {
     const { status, notes } = req.body;
     console.log('Updating payment status:', { paymentId: req.params.id, status, notes });
 
+    // Get the payment to find the order
+    const payment = await Payment.findByPk(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
     await Payment.update({
       status,
       notes
     }, {
       where: { id: req.params.id }
     });
+
+    // If payment is confirmed, create notification for the user
+    if (status === 'confirmed') {
+      try {
+        const order = await Order.findByPk(payment.orderId);
+        if (order) {
+          await Notification.create({
+            userId: order.userId,
+            message: `Your payment for Order #${payment.orderId} has been confirmed. Your order is now being processed.`,
+            type: 'payment_confirmed',
+            relatedId: payment.orderId,
+            relatedType: 'order'
+          });
+          console.log('Notification created for user:', order.userId);
+        }
+      } catch (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Don't fail the payment update if notification fails
+      }
+    }
 
     console.log('Payment status updated:', req.params.id);
     res.json({ message: 'Payment status updated' });

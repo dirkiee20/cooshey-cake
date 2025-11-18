@@ -1533,22 +1533,25 @@ body {
 }
 
 .filter-tab {
-    padding: 8px 16px;
-    border: none;
-    background: var(--gray-100);
-    color: var(--gray-600);
-    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: 1px solid var(--gray-300);
+    background: var(--white);
+    color: var(--gray-700);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 500;
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
 }
 
 .filter-tab:hover {
-    background: var(--gray-200);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
 }
 
 .filter-tab.active {
     background: var(--primary-color);
+    border-color: var(--primary-color);
     color: var(--white);
 }
 

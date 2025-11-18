@@ -15,6 +15,7 @@ const InventoryTab = (function() {
     function init() {
         console.log('InventoryTab: Initializing inventory tab');
         bindEvents();
+        setFilter('all'); // Reset active state
         loadData();
     }
 
@@ -451,7 +452,11 @@ const InventoryTab = (function() {
             </div>
         `;
         document.body.appendChild(modal);
-        modal.style.display = 'flex';
+
+        // Animate modal entrance
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
 
         // Get form elements
         const form = modal.querySelector('#editProductForm');
@@ -465,7 +470,7 @@ const InventoryTab = (function() {
             setTimeout(() => modal.remove(), 300);
         };
         modal.querySelector('.close-btn').onclick = closeModal;
-        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+        // modal.onclick = (e) => { if (e.target === modal) closeModal(); }; // Removed to prevent accidental closing
         cancelBtn.onclick = closeModal;
 
         // Image validation
@@ -671,12 +676,21 @@ const InventoryTab = (function() {
 
     // Update existing product
     async function updateProduct(productId) {
+        const product = state.products.find(p => p.id === productId);
+        if (!product) return;
+
         const formData = new FormData();
-        formData.append('name', document.getElementById('editProductName').value.trim());
-        formData.append('description', document.getElementById('editProductDescription').value.trim());
-        formData.append('price', document.getElementById('editProductPrice').value);
-        formData.append('stock', document.getElementById('editProductStock').value);
-        formData.append('category', document.getElementById('editProductCategory').value);
+        const name = document.getElementById('editProductName').value.trim();
+        const description = document.getElementById('editProductDescription').value.trim();
+        const price = document.getElementById('editProductPrice').value;
+        const stock = document.getElementById('editProductStock').value;
+        const category = document.getElementById('editProductCategory').value;
+
+        formData.append('name', name);
+        formData.append('description', description);
+        formData.append('price', price);
+        formData.append('stock', stock);
+        formData.append('category', category);
 
         const imageFile = document.getElementById('editProductImage').files[0];
         if (imageFile) {
@@ -697,18 +711,54 @@ const InventoryTab = (function() {
                 throw new Error(errorData.message || 'Failed to update product');
             }
 
-            // Log the action
-            try {
-                await window.AdminAPI.createLog({
-                    action: 'update',
-                    entityType: 'product',
-                    entityId: productId,
-                    entityName: document.getElementById('editProductName').value.trim(),
-                    details: `Updated product details`,
-                    adminName: 'Admin'
-                });
-            } catch (logError) {
-                console.error('Failed to log product update:', logError);
+            // Create detailed log based on changes
+            const changes = [];
+            if (name !== product.name) changes.push(`name to "${name}"`);
+            if (price !== product.price.toString()) changes.push(`price to ₱${price}`);
+            if (description !== (product.description || '')) changes.push(`description`);
+            if (category !== product.category) changes.push(`category to "${category}"`);
+            if (imageFile) changes.push(`image`);
+
+            // Handle stock changes separately
+            const oldStock = parseInt(product.stock);
+            const newStock = parseInt(stock);
+            const stockChanged = oldStock !== newStock;
+
+            if (stockChanged) {
+                // Create stock transaction log
+                try {
+                    const stockAction = newStock > oldStock ? 'stock-in' : 'stock-out';
+                    const quantity = Math.abs(newStock - oldStock);
+
+                    await window.AdminAPI.createLog({
+                        action: stockAction,
+                        entityType: stockAction,
+                        entityId: productId,
+                        entityName: name,
+                        details: `Stock ${stockAction.replace('-', ' ')}: ${quantity} units (${oldStock} → ${newStock})`,
+                        adminName: 'Admin'
+                    });
+                } catch (logError) {
+                    console.error('Failed to log stock transaction:', logError);
+                }
+            }
+
+            // Log other product updates (if any)
+            if (changes.length > 0) {
+                const details = `Updated ${changes.join(', ')}`;
+
+                try {
+                    await window.AdminAPI.createLog({
+                        action: 'update',
+                        entityType: 'product',
+                        entityId: productId,
+                        entityName: name,
+                        details: details,
+                        adminName: 'Admin'
+                    });
+                } catch (logError) {
+                    console.error('Failed to log product update:', logError);
+                }
             }
 
             window.AdminUtils.showToast('Product updated successfully', 'success');

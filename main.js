@@ -273,36 +273,130 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 
-  // --- Floating Notification Modal Logic ---
+  // --- Notifications Logic ---
 
-  // Get the modal element
-  const modal = document.getElementById("notification-modal");
+  const notificationBtn = document.getElementById("notification-btn");
+  const subscribeModal = document.getElementById("notification-modal");
+  const notificationsModal = document.getElementById("notifications-modal");
+  const notificationsList = document.getElementById("notifications-list");
+  const markAllReadBtn = document.getElementById("mark-all-read-btn");
 
-  // Get the button that opens the modal
-  const openBtn = document.getElementById("notification-btn");
+  // Function to load and display notifications
+  const loadNotifications = async () => {
+    const userToken = localStorage.getItem('userToken');
+    if (!userToken) return;
 
-  // Get the <span> element that closes the modal
-  const closeBtn = document.querySelector(".close-btn");
+    try {
+      const response = await fetch('http://localhost:3001/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
 
-  // Function to open the modal
-  const openModal = () => {
-    if (modal) modal.classList.add("show-modal");
+      if (response.ok) {
+        const notifications = await response.json();
+        displayNotifications(notifications);
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
   };
 
-  // Function to close the modal
-  const closeModal = () => {
-    if (modal) modal.classList.remove("show-modal");
+  // Function to display notifications
+  const displayNotifications = (notifications) => {
+    if (!notificationsList) return;
+
+    if (notifications.length === 0) {
+      notificationsList.innerHTML = '<p>No notifications yet.</p>';
+      markAllReadBtn.style.display = 'none';
+      return;
+    }
+
+    notificationsList.innerHTML = notifications.map(notification => `
+      <div class="notification-item ${notification.isRead ? 'read' : 'unread'}" data-id="${notification.id}">
+        <div class="notification-content">
+          <p>${notification.message}</p>
+          <small>${new Date(notification.createdAt).toLocaleString()}</small>
+        </div>
+        ${!notification.isRead ? '<button class="mark-read-btn" data-id="' + notification.id + '">Mark as Read</button>' : ''}
+      </div>
+    `).join('');
+
+    markAllReadBtn.style.display = 'block';
+
+    // Add event listeners for mark as read buttons
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const notificationId = e.target.dataset.id;
+        await markNotificationAsRead(notificationId);
+        loadNotifications();
+      });
+    });
   };
 
-  // When the user clicks the notification button, open the modal
-  if (openBtn) {
-    openBtn.onclick = openModal;
+  // Function to mark notification as read
+  const markNotificationAsRead = async (notificationId) => {
+    const userToken = localStorage.getItem('userToken');
+    if (!userToken) return;
+
+    try {
+      await fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  // Function to mark all notifications as read
+  const markAllNotificationsAsRead = async () => {
+    const userToken = localStorage.getItem('userToken');
+    if (!userToken) return;
+
+    try {
+      await fetch('http://localhost:3001/api/notifications/read-all', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
+      loadNotifications();
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
+  };
+
+  // Handle notification button click
+  if (notificationBtn) {
+    notificationBtn.addEventListener('click', () => {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      if (userInfo) {
+        // Logged in user - show notifications
+        loadNotifications();
+        if (notificationsModal) notificationsModal.classList.add("show-modal");
+      } else {
+        // Not logged in - show subscribe modal
+        if (subscribeModal) subscribeModal.classList.add("show-modal");
+      }
+    });
   }
 
-  // When the user clicks on <span> (x), close the modal
-  if (closeBtn) {
-    closeBtn.onclick = closeModal;
+  // Handle mark all read button
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', markAllNotificationsAsRead);
   }
+
+  // Close modals
+  const closeBtns = document.querySelectorAll(".close-btn");
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (subscribeModal) subscribeModal.classList.remove("show-modal");
+      if (notificationsModal) notificationsModal.classList.remove("show-modal");
+    });
+  });
 
   // When the user clicks anywhere outside of the modal content, close it
   window.onclick = function (event) {

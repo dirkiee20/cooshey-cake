@@ -19,6 +19,7 @@ const LoggingTab = (function() {
     function init() {
         console.log('LoggingTab: Initializing logging tab');
         bindEvents();
+        setFilter('all'); // Reset active state
         setupEventListeners();
         loadData();
     }
@@ -105,19 +106,90 @@ const LoggingTab = (function() {
         loadData();
     }
 
+    // Fetch stock transactions
+    async function fetchStockTransactions() {
+        try {
+            const response = await fetch('/api/stock-transactions', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch stock transactions');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('LoggingTab: Failed to fetch stock transactions:', error);
+            return [];
+        }
+    }
+
+    // Combine logs and stock transactions into unified activities
+    function combineActivities(logs, stockTransactions) {
+        const activities = [];
+
+        // Add logs
+        logs.forEach(log => {
+            // Check if this is a stock-in or stock-out log from product updates
+            if (log.entityType === 'stock-in' || log.entityType === 'stock-out') {
+                activities.push({
+                    ...log,
+                    type: 'stock',
+                    activityType: log.entityType
+                });
+            } else {
+                activities.push({
+                    ...log,
+                    type: 'log',
+                    activityType: log.entityType
+                });
+            }
+        });
+
+        // Add stock transactions
+        stockTransactions.forEach(transaction => {
+            activities.push({
+                id: `stock-${transaction.id}`,
+                createdAt: transaction.createdAt,
+                adminName: transaction.admin?.name || 'System',
+                action: transaction.type.replace('_', '-'), // stock_in -> stock-in
+                entityType: transaction.type.replace('_', '-'), // stock_in -> stock-in
+                entityName: transaction.product?.name || `Product #${transaction.productId}`,
+                details: `${transaction.type.replace('_', ' ').toUpperCase()}: ${transaction.quantity} units (${transaction.previousStock} → ${transaction.newStock})${transaction.reference ? ` - Ref: ${transaction.reference}` : ''}${transaction.notes ? ` - ${transaction.notes}` : ''}`,
+                type: 'stock'
+            });
+        });
+
+        // Sort by createdAt descending
+        return activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
     // Load logs data
     async function loadData() {
         try {
-            console.log('LoggingTab: Loading logs data');
-            const logs = await window.AdminAPI.getLogs();
+            console.log('LoggingTab: Loading logs and stock transactions data');
+
+            // Fetch both logs and stock transactions
+            const [logs, stockTransactions] = await Promise.all([
+                window.AdminAPI.getLogs(),
+                fetchStockTransactions()
+            ]);
+
             console.log('LoggingTab: Logs received:', logs?.length || 0);
-            state.logs = logs;
+            console.log('LoggingTab: Stock transactions received:', stockTransactions?.length || 0);
+
+            // Combine and format the data
+            const combinedActivities = combineActivities(logs || [], stockTransactions || []);
+            state.logs = combinedActivities;
+
             state.currentPage = 1;
             calculateTotalPages();
             renderLogs();
         } catch (error) {
-            console.error('LoggingTab: Failed to load logs:', error);
-            window.AdminUtils.showToast('Failed to load logs', 'error');
+            console.error('LoggingTab: Failed to load data:', error);
+            window.AdminUtils.showToast('Failed to load activity logs', 'error');
             showEmptyState();
         }
     }
@@ -153,21 +225,30 @@ const LoggingTab = (function() {
 
         // Apply entity type filter
         if (state.currentFilter !== 'all') {
-            filtered = filtered.filter(log => log.entityType === state.currentFilter);
+            if (state.currentFilter === 'stock-in') {
+                filtered = filtered.filter(activity => activity.type === 'stock' && activity.entityType === 'stock-in');
+            } else if (state.currentFilter === 'stock-out') {
+                filtered = filtered.filter(activity => activity.type === 'stock' && activity.entityType === 'stock-out');
+            } else {
+                // For other entity types (product, payment, order, user)
+                filtered = filtered.filter(activity => activity.type === 'log' && activity.entityType === state.currentFilter);
+            }
         }
 
-        // Apply action filter
+        // Apply action filter (only for logs, not stock transactions)
         if (state.actionFilter) {
-            filtered = filtered.filter(log => log.action === state.actionFilter);
+            filtered = filtered.filter(activity =>
+                activity.type === 'log' && activity.action === state.actionFilter
+            );
         }
 
         // Apply search filter
         if (state.searchTerm) {
-            filtered = filtered.filter(log =>
-                log.entityName.toLowerCase().includes(state.searchTerm) ||
-                log.adminName?.toLowerCase().includes(state.searchTerm) ||
-                log.details?.toLowerCase().includes(state.searchTerm) ||
-                log.id.toString().includes(state.searchTerm)
+            filtered = filtered.filter(activity =>
+                activity.entityName.toLowerCase().includes(state.searchTerm) ||
+                activity.adminName?.toLowerCase().includes(state.searchTerm) ||
+                activity.details?.toLowerCase().includes(state.searchTerm) ||
+                activity.id.toString().includes(state.searchTerm)
             );
         }
 

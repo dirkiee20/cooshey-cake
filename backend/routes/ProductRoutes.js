@@ -124,7 +124,19 @@ router.post('/', uploadProduct, async (req, res) => {
        newStock: product.stock,
      });
 
-     res.status(201).json(product);
+     const productResponse = {
+       id: product.id,
+       name: product.name,
+       price: product.price,
+       imageUrl: product.imageUrl,
+       category: product.category,
+       description: product.description,
+       stock: product.stock,
+       createdAt: product.createdAt,
+       updatedAt: product.updatedAt
+     };
+     console.log('Returning product:', productResponse);
+     res.status(201).json(productResponse);
    } catch (error) {
      console.error('ERROR CREATING PRODUCT:', error);
      console.error('Error details:', error.message);
@@ -162,16 +174,15 @@ router.put('/:id', uploadUpdate, async (req, res) => {
     if (stock !== undefined) updateData.stock = stock;
     if (imageUrl) updateData.imageUrl = imageUrl;
 
-    const [updatedRowsCount, updatedRows] = await Product.update(updateData, {
-      where: { id: req.params.id },
-      returning: true
+    const [updatedRowsCount] = await Product.update(updateData, {
+      where: { id: req.params.id }
     });
 
     if (updatedRowsCount === 0) {
       return res.status(404).json({ msg: 'Product not found' });
     }
 
-    const updatedProduct = updatedRows[0];
+    const updatedProduct = await Product.findByPk(req.params.id);
 
     // Log transaction if stock changed
     if (stock !== undefined && stock !== currentProduct.stock) {
@@ -190,7 +201,7 @@ router.put('/:id', uploadUpdate, async (req, res) => {
       });
     }
 
-    res.json(updatedProduct);
+    res.json(updatedProduct.toJSON());
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: 'Server Error' });

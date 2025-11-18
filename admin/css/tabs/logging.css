@@ -84,6 +84,16 @@
     color: #9333ea;
 }
 
+.log-entity-type.stock-in {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.log-entity-type.stock-out {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
 /* Log Actions */
 .log-action {
     display: inline-block;
@@ -115,6 +125,16 @@
 }
 
 .log-action.reject {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.log-action.stock-in {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.log-action.stock-out {
     background: rgba(239, 68, 68, 0.1);
     color: #dc2626;
 }
@@ -277,7 +297,7 @@
         flex-wrap: wrap;
     }
 
-    .filter-tab {
+    .logging-section .filter-tab {
         padding: var(--spacing-xs) var(--spacing-sm);
         font-size: 0.8rem;
     }

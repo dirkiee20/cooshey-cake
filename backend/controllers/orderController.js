@@ -1,5 +1,7 @@
 const { Order, OrderItem } = require('../models/orderModel');
 const { Cart, CartItem } = require('../models/cartModel');
+const StockTransaction = require('../models/StockTransaction');
+const Product = require('../models/Product');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Create new order
@@ -23,6 +25,20 @@ const createOrder = asyncHandler(async (req, res) => {
         throw new Error('Shipping information is required');
     }
 
+    // Check stock availability for all items
+    for (const item of items) {
+        if (!item.product || !item.product.id) {
+            throw new Error('Invalid product in order items');
+        }
+        const product = await Product.findByPk(item.product.id);
+        if (!product) {
+            throw new Error(`Product ${item.product.id} not found`);
+        }
+        if (product.stock < item.quantity) {
+            throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`);
+        }
+    }
+
     // Combine address and contact for shippingAddress field
     const shippingAddress = `${shippingInfo.address}\nContact: ${shippingInfo.contact}`;
 
@@ -38,9 +54,6 @@ const createOrder = asyncHandler(async (req, res) => {
     // Create order items
     const orderItems = await Promise.all(
         items.map(async (item) => {
-            if (!item.product || !item.product.id) {
-                throw new Error('Invalid product in order items');
-            }
             return await OrderItem.create({
                 orderId: order.id,
                 productId: item.product.id,
@@ -48,6 +61,28 @@ const createOrder = asyncHandler(async (req, res) => {
             });
         })
     );
+
+    // Subtract stock and create stock transactions
+    for (const item of items) {
+        const product = await Product.findByPk(item.product.id);
+        const previousStock = product.stock;
+        const newStock = previousStock - item.quantity;
+
+        // Create stock transaction
+        await StockTransaction.create({
+            productId: item.product.id,
+            type: 'sale',
+            quantity: item.quantity,
+            previousStock,
+            newStock,
+            reference: `Order #${order.id}`,
+            notes: `Order placed - Order #${order.id}`,
+            adminId: req.user.id // Assuming user is admin or handle differently
+        });
+
+        // Update product stock
+        await Product.update({ stock: newStock }, { where: { id: item.product.id } });
+    }
 
     // Remove ordered items from cart
     const cart = await Cart.findOne({ where: { userId: req.user.id } });
@@ -143,24 +178,20 @@ const getOrders = asyncHandler(async (req, res) => {
     res.json(orders);
 });
 
-// @desc    Update order to delivered
-// @route   PUT /api/orders/:id/deliver
+// @desc    Update order status
+// @route   PUT /api/orders/:id/status
 // @access  Private/Admin
 const updateOrderStatus = asyncHandler(async (req, res) => {
-    const [updatedRowsCount, updatedRows] = await Order.update(
-        { status: req.body.status },
-        {
-            where: { id: req.params.id },
-            returning: true
-        }
-    );
-
-    if (updatedRowsCount === 0) {
+    const order = await Order.findByPk(req.params.id);
+    if (!order) {
         res.status(404);
         throw new Error('Order not found');
     }
 
-    res.json(updatedRows[0]);
+    order.status = req.body.status;
+    await order.save();
+
+    res.json(order);
 });
 
 module.exports = { createOrder, getOrderById, getOrders, updateOrderStatus };

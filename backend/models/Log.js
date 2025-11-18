@@ -14,12 +14,12 @@ const Log = sequelize.define('Log', {
     allowNull: false,
   },
   entityType: {
-    type: DataTypes.ENUM('product', 'payment', 'order', 'user'),
+    type: DataTypes.ENUM('product', 'payment', 'order', 'user', 'stock-in', 'stock-out'),
     allowNull: false,
   },
   entityId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
   },
   entityName: {
     type: DataTypes.STRING,

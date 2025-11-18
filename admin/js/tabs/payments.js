@@ -18,7 +18,9 @@
         console.log('PaymentsTab: Window object available:', !!window);
         console.log('PaymentsTab: AdminAPI available:', !!window.AdminAPI);
         bindEvents();
+        setFilter('all'); // Reset active state
         loadData();
+        bindModalCloseButtons();
     }
 
     // Bind event listeners
@@ -41,6 +43,34 @@
         }
     }
 
+    // Bind close button functionality for modals
+    function bindModalCloseButtons() {
+        // Handle buttons with btn-close-modal class
+        document.querySelectorAll('.btn-close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modal = btn.closest('.modal');
+                if (modal) modal.style.display = 'none';
+            });
+        });
+
+        // Handle buttons with data-dismiss="modal" attribute
+        document.querySelectorAll('[data-dismiss="modal"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modal = btn.closest('.modal');
+                if (modal) modal.style.display = 'none';
+            });
+        });
+
+        // Also close modal if clicking outside modal content (modal overlay)
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    }
+
     // Load payments data
     async function loadData() {
         try {
@@ -54,7 +84,6 @@
             renderPayments();
         } catch (error) {
             console.error('PaymentsTab: Failed to load payments:', error);
-            // Show empty state on error
             state.payments = [];
             state.currentPage = 1;
             calculateTotalPages();
@@ -78,9 +107,13 @@
             rejected: state.payments.filter(p => p.status === 'rejected').length
         };
 
-        document.getElementById('pendingCount').textContent = stats.pending;
-        document.getElementById('confirmedCount').textContent = stats.confirmed;
-        document.getElementById('rejectedCount').textContent = stats.rejected;
+        const pendingElem = document.getElementById('pendingCount');
+        const confirmedElem = document.getElementById('confirmedCount');
+        const rejectedElem = document.getElementById('rejectedCount');
+
+        if (pendingElem) pendingElem.textContent = stats.pending;
+        if (confirmedElem) confirmedElem.textContent = stats.confirmed;
+        if (rejectedElem) rejectedElem.textContent = stats.rejected;
     }
 
     // Set active filter
@@ -129,6 +162,8 @@
         if (!grid) return;
 
         const filteredPayments = getFilteredPayments();
+        console.log('PaymentsTab: Rendering payments, filtered count:', filteredPayments.length);
+        console.log('PaymentsTab: Current filter:', state.currentFilter);
 
         if (!filteredPayments || filteredPayments.length === 0) {
             grid.innerHTML = `
@@ -147,18 +182,10 @@
         const endIndex = startIndex + state.itemsPerPage;
         const paginatedPayments = filteredPayments.slice(startIndex, endIndex);
 
-        if (!filteredPayments || filteredPayments.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-credit-card"></i>
-                    <h3>No payments found</h3>
-                    <p>${state.searchTerm ? 'Try adjusting your search terms' : 'No payments match the current filter'}</p>
-                </div>
-            `;
-            return;
-        }
+        grid.innerHTML = paginatedPayments.map(payment => {
+            const isPending = (payment.status === 'pending');
 
-        grid.innerHTML = paginatedPayments.map(payment => `
+            return `
             <div class="payment-card" data-id="${payment.id}">
                 <div class="payment-header">
                     <div class="payment-info">
@@ -189,17 +216,8 @@
                     ` : ''}
                 </div>
 
-                ${payment.receiptImageUrl ? `
-                    <div class="payment-proof">
-                        <img src="http://localhost:3001${payment.receiptImageUrl}"
-                              alt="Payment proof"
-                              onclick="PaymentsTab.viewReceipt('${payment.receiptImageUrl}')"
-                              style="cursor: pointer; max-width: 100px; max-height: 100px; border-radius: 8px;">
-                    </div>
-                ` : ''}
-
                 <div class="payment-actions">
-                    ${payment.status === 'pending' ? `
+                    ${isPending ? `
                         <button class="btn btn-success" onclick="PaymentsTab.confirmPayment(${payment.id})">
                             <i class="fas fa-check"></i> Confirm
                         </button>
@@ -218,7 +236,8 @@
                     </div>
                 ` : ''}
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         showPagination(filteredPayments.length);
     }
@@ -258,11 +277,9 @@
         }
         pageNumbers.innerHTML = pageHtml;
 
-        // Update navigation buttons
         prevBtn.disabled = state.currentPage === 1;
         nextBtn.disabled = state.currentPage === state.totalPages;
 
-        // Bind page number events
         pageNumbers.querySelectorAll('.page-number').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 state.currentPage = parseInt(e.target.dataset.page);
@@ -301,36 +318,9 @@
         const paymentName = payment ? `Order #${payment.orderId}` : `Payment #${paymentId}`;
 
         try {
-            // First update payment status
             await window.AdminAPI.updatePaymentStatus(paymentId, 'confirmed');
+            await window.AdminAPI.updateOrderStatus(payment.orderId, 'Confirmed');
 
-            // Update order status to Processing when payment is confirmed
-            await window.AdminAPI.updateOrderStatus(payment.orderId, 'Processing');
-
-            // Get order details to create stock transactions
-            const orderDetails = await window.AdminAPI.getOrderById(payment.orderId);
-
-            // Create stock transactions for each item in the order (sale type)
-            if (orderDetails && orderDetails.items) {
-                for (const item of orderDetails.items) {
-                    if (item.product && item.quantity > 0) {
-                        try {
-                            await window.AdminAPI.createStockTransaction({
-                                productId: item.product.id,
-                                type: 'sale',
-                                quantity: item.quantity,
-                                reference: `Order #${payment.orderId}`,
-                                notes: `Payment confirmed - Order #${payment.orderId}`
-                            });
-                        } catch (stockError) {
-                            console.error('Failed to create stock transaction for product:', item.product.id, stockError);
-                            // Continue with other items even if one fails
-                        }
-                    }
-                }
-            }
-
-            // Log the action
             try {
                 await window.AdminAPI.createLog({
                     action: 'confirm',
@@ -344,6 +334,9 @@
                 console.error('Failed to log payment confirmation:', logError);
             }
 
+            // Clear dashboard cache to refresh stats (preserve auth token)
+            localStorage.removeItem('dashboardStats');
+
             window.AdminUtils.showToast('Payment confirmed successfully - inventory updated', 'success');
             await loadData();
         } catch (error) {
@@ -355,7 +348,7 @@
     // Reject payment
     async function rejectPayment(paymentId) {
         const notes = prompt('Please provide a reason for rejection (optional):');
-        if (notes === null) return; // User cancelled
+        if (notes === null) return;
 
         const payment = state.payments.find(p => p.id === paymentId);
         const paymentName = payment ? `Order #${payment.orderId}` : `Payment #${paymentId}`;
@@ -363,7 +356,6 @@
         try {
             await window.AdminAPI.updatePaymentStatus(paymentId, 'rejected', notes);
 
-            // Log the action
             try {
                 await window.AdminAPI.createLog({
                     action: 'reject',
@@ -390,96 +382,60 @@
         const payment = state.payments.find(p => p.id === paymentId);
         if (!payment) return;
 
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content large-modal">
-                <span class="close-btn">&times;</span>
-                <h2>Payment Details - Order #${payment.orderId}</h2>
+        document.getElementById('paymentDetailTitle').textContent = `Payment Proof Details - Order #${payment.orderId}`;
+        document.getElementById('detailOrderId').textContent = payment.orderId;
+        document.getElementById('detailCustomer').textContent = payment.order ? payment.order.userId : 'Unknown';
+        document.getElementById('detailOrderAmount').textContent = window.AdminUtils.formatCurrency(payment.amount);
+        document.getElementById('detailOrderDate').textContent = new Date(payment.createdAt).toLocaleDateString();
+        document.getElementById('detailPaymentMethod').textContent = payment.paymentMethod.toUpperCase();
+        document.getElementById('detailReference').textContent = payment.gcashReference || '-';
+        document.getElementById('detailSubmitted').textContent = new Date(payment.createdAt).toLocaleString();
+        document.getElementById('detailStatus').textContent = payment.status.charAt(0).toUpperCase() + payment.status.slice(1);
+        document.getElementById('detailStatus').className = `status-badge ${payment.status}`;
 
-                <div class="payment-detail-grid horizontal-layout">
-                            <div class="detail-section payment-proof-section">
-                                <h3>Payment Proof</h3>
-                                ${payment.receiptImageUrl ? `
-                                    <div class="receipt-preview">
-                                        <img src="http://localhost:3001${payment.receiptImageUrl}"
-                                             alt="Payment receipt"
-                                             style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                    </div>
-                                ` : `
-                                    <div class="no-proof">
-                                        <i class="fas fa-image" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
-                                        <p>No payment proof uploaded yet</p>
-                                    </div>
-                                `}
-                            </div>
-        
-                            <div class="detail-section payment-info-section">
-                                <h3>Payment Information</h3>
-                                <div class="detail-row">
-                                    <span class="label">Payment ID:</span>
-                                    <span class="value">${payment.id}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="label">Order ID:</span>
-                                    <span class="value">${payment.orderId}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="label">Amount:</span>
-                                    <span class="value">${window.AdminUtils.formatCurrency(payment.amount)}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="label">Method:</span>
-                                    <span class="value">${payment.paymentMethod.toUpperCase()}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="label">Status:</span>
-                                    <span class="value">
-                                        <span class="status-badge ${payment.status}">${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}</span>
-                                    </span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="label">Submitted:</span>
-                                    <span class="value">${new Date(payment.createdAt).toLocaleString()}</span>
-                                </div>
-                                ${payment.gcashReference ? `
-                                    <div class="detail-row">
-                                        <span class="label">GCash Reference:</span>
-                                        <span class="value">${payment.gcashReference}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
+        const notesRow = document.getElementById('detailNotesRow');
+        if (payment.notes) {
+            document.getElementById('detailNotes').textContent = payment.notes;
+            notesRow.style.display = 'flex';
+        } else {
+            notesRow.style.display = 'none';
+        }
 
-                ${payment.notes ? `
-                    <div class="detail-section">
-                        <h3>Admin Notes</h3>
-                        <p>${payment.notes}</p>
-                    </div>
-                ` : ''}
+        const receiptImage = document.getElementById('receiptImage');
+        if (payment.receiptImageUrl) {
+            receiptImage.src = `http://localhost:3001${payment.receiptImageUrl}`;
+            receiptImage.style.display = 'block';
+        } else {
+            receiptImage.style.display = 'none';
+        }
 
-                <div class="modal-actions">
-                    ${payment.status === 'pending' ? `
-                        <button class="btn btn-success" onclick="PaymentsTab.confirmPayment(${payment.id}); this.closest('.modal').remove();">
-                            <i class="fas fa-check"></i> Confirm Payment
-                        </button>
-                        <button class="btn btn-danger" onclick="PaymentsTab.rejectPayment(${payment.id}); this.closest('.modal').remove();">
-                            <i class="fas fa-times"></i> Reject Payment
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove();">
-                        <i class="fas fa-times"></i> Close
-                    </button>
-                </div>
-            </div>
-        `;
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        const rejectBtn = document.getElementById('rejectPaymentBtn');
 
-        document.body.appendChild(modal);
+        if (payment.status === 'pending') {
+            confirmBtn.style.display = 'block';
+            rejectBtn.style.display = 'block';
+        } else {
+            confirmBtn.style.display = 'none';
+            rejectBtn.style.display = 'none';
+        }
+
+        const modal = document.getElementById('paymentDetailModal');
         modal.style.display = 'flex';
 
-        // Close modal functionality
-        modal.querySelector('.close-btn').onclick = () => modal.remove();
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        // Ensure modal close buttons are bound
+        bindModalCloseButtons();
+
+        // Add event listeners for modal buttons
+        confirmBtn.onclick = () => {
+            confirmPayment(paymentId);
+            modal.style.display = 'none';
+        };
+
+        rejectBtn.onclick = () => {
+            rejectPayment(paymentId);
+            modal.style.display = 'none';
+        };
     }
 
     // View receipt in modal

@@ -15,11 +15,10 @@ router.get('/stats', async (req, res) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    // Get total revenue (from completed payments)
+    // Get total revenue (from completed payments) - all time
     const totalRevenueResult = await Payment.sum('amount', {
       where: {
-        status: 'confirmed',
-        createdAt: { [Op.gte]: startDate }
+        status: 'confirmed'
       }
     }) || 0;
 
