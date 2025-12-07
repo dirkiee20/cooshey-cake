@@ -199,6 +199,12 @@ document.addEventListener("DOMContentLoaded", function () {
       if (cartIconLink) {
           cartIconLink.style.display = 'none';
       }
+
+      // Hide the notification button for admin users
+      const notificationBtn = document.getElementById('notification-btn');
+      if (notificationBtn) {
+          notificationBtn.style.display = 'none';
+      }
     }
 
     logoutBtn.addEventListener('click', () => {
@@ -206,6 +212,15 @@ document.addEventListener("DOMContentLoaded", function () {
       localStorage.removeItem('userInfo');
       window.location.reload();
     });
+
+    // My Orders functionality
+    const myOrdersLink = document.getElementById('my-orders-link');
+    if (myOrdersLink) {
+      myOrdersLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadUserOrders();
+      });
+    }
 
     userDropdownToggle.addEventListener('click', () => {
       userDropdownMenu.classList.toggle('show');
@@ -544,12 +559,98 @@ document.addEventListener("DOMContentLoaded", function () {
     markAllReadBtn.addEventListener('click', markAllNotificationsAsRead);
   }
 
+  // My Orders functionality
+  const loadUserOrders = async () => {
+    const userToken = localStorage.getItem('userToken');
+    if (!userToken) {
+      showFlashMessage('Please login to view your orders.', 'error');
+      return;
+    }
+
+    const myOrdersModal = document.getElementById('my-orders-modal');
+    const ordersList = document.getElementById('orders-list');
+
+    if (!myOrdersModal || !ordersList) return;
+
+    try {
+      ordersList.innerHTML = '<div class="loading-spinner">Loading your orders...</div>';
+
+      const response = await fetch('http://localhost:3001/api/orders/user', {
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load orders');
+      }
+
+      const orders = await response.json();
+
+      if (orders.length === 0) {
+         ordersList.innerHTML = '<li><p>You have no orders yet.</p></li>';
+       } else {
+         ordersList.innerHTML = orders.map(order => {
+           const orderDate = new Date(order.createdAt).toLocaleDateString();
+           const statusClass = order.status.toLowerCase();
+           const itemsCount = order.items ? order.items.length : 0;
+
+           return `
+             <li class="order-card" role="listitem" aria-labelledby="order-${order.id}-title">
+               <div class="order-header">
+                 <h4 id="order-${order.id}-title">Order #${order.id}</h4>
+                 <span class="order-status ${statusClass}" aria-label="Order status: ${order.status}">${order.status}</span>
+               </div>
+               <div class="order-details">
+                 <p><strong>Date:</strong> <time datetime="${order.createdAt}">${orderDate}</time></p>
+                 <p><strong>Total:</strong> ₱${parseFloat(order.totalAmount).toFixed(2)}</p>
+                 <p><strong>Items:</strong> ${itemsCount}</p>
+                 <p><strong>Shipping:</strong> ${order.shippingAddress}</p>
+               </div>
+               <div class="order-items" role="list" aria-label="Items in order ${order.id}">
+                 ${order.items ? order.items.map(item => `
+                   <div class="order-item" role="listitem">
+                     <div class="order-item-details">
+                       <h5 class="order-item-name">${item.product ? item.product.name : 'Unknown Product'}</h5>
+                       <div class="order-item-meta">
+                         <span class="order-item-quantity" aria-label="Quantity: ${item.quantity}">Qty: ${item.quantity}</span>
+                         <span class="order-item-price" aria-label="Price: ₱${item.product ? parseFloat(item.product.price).toFixed(2) : '0.00'}">₱${item.product ? parseFloat(item.product.price).toFixed(2) : '0.00'}</span>
+                       </div>
+                     </div>
+                   </div>
+                 `).join('') : ''}
+               </div>
+             </li>
+           `;
+         }).join('');
+       }
+
+      myOrdersModal.classList.add('show-modal');
+
+      // Focus management for accessibility
+      myOrdersModal.focus();
+      myOrdersModal.setAttribute('tabindex', '-1');
+
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+      ordersList.innerHTML = '<p>Failed to load orders. Please try again later.</p>';
+      showFlashMessage('Failed to load orders. Please try again.', 'error');
+    }
+  };
+
   // Close modals
   const closeBtns = document.querySelectorAll(".close-btn");
   closeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       if (subscribeModal) subscribeModal.classList.remove("show-modal");
       if (notificationsModal) notificationsModal.classList.remove("show-modal");
+      const myOrdersModal = document.getElementById('my-orders-modal');
+      if (myOrdersModal) {
+        myOrdersModal.classList.remove("show-modal");
+        // Restore focus to the trigger button
+        const myOrdersLink = document.getElementById('my-orders-link');
+        if (myOrdersLink) myOrdersLink.focus();
+      }
     });
   });
 

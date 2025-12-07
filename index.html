@@ -181,6 +181,16 @@
                         </div>
                         <span id="strength-text">Password strength</span>
                     </div>
+                    <div class="password-requirements">
+                        <h4>Password Requirements:</h4>
+                        <ul>
+                            <li>At least 8 characters long</li>
+                            <li>At least one lowercase letter (a-z)</li>
+                            <li>At least one uppercase letter (A-Z)</li>
+                            <li>At least one number (0-9)</li>
+                            <li>At least one special character (@$!%*?&)</li>
+                        </ul>
+                    </div>
                     <div class="password-input-container">
                         <input type="password" id="register-confirm-password" placeholder="Confirm Password" required>
                         <button type="button" class="password-toggle" id="toggle-confirm-password" aria-label="Toggle confirm password visibility">
@@ -236,6 +246,18 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- My Orders Modal -->
+    <div id="my-orders-modal" class="modal" role="dialog" aria-labelledby="my-orders-title" aria-describedby="orders-description">
+      <div class="modal-content">
+        <span class="close-btn" aria-label="Close My Orders">&times;</span>
+        <h2 id="my-orders-title" class="section__header">My Orders</h2>
+        <div id="orders-description" class="sr-only">View and manage your order history</div>
+        <ul id="orders-list" role="list" aria-label="Your orders">
+          <!-- Orders will be loaded here -->
+        </ul>
       </div>
     </div>
 
