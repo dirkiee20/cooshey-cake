@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createOrder, getOrderById, getOrders, updateOrderStatus } = require('../controllers/orderController');
+const { createOrder, getOrderById, getOrders, getUserOrders, updateOrderStatus } = require('../controllers/orderController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Debug: Log route registration
@@ -11,6 +11,9 @@ router.post('/', protect, createOrder);
 
 // GET /api/orders - Get all orders (temporarily no auth for debug)
 router.get('/', getOrders);
+
+// GET /api/orders/user - Get user orders
+router.get('/user', protect, getUserOrders);
 
 // GET /api/orders/:id - Get single order
 router.get('/:id', protect, getOrderById);

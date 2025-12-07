@@ -44,7 +44,12 @@ const admin = async (req, res, next) => {
 
     // Always check admin status from database, not from cached JWT
     const User = require('../models/userModel');
+    console.log('Admin check for user ID:', req.user.id);
     const user = await User.findByPk(req.user.id);
+    console.log('User found:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('User isAdmin:', user.isAdmin);
+    }
 
     if (user && user.isAdmin) {
       // Update req.user with fresh data from database

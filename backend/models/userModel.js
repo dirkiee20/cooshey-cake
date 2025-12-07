@@ -28,6 +28,10 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: false,
   },
+  address: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 }, {
   timestamps: true,
 });
@@ -54,4 +58,5 @@ User.beforeUpdate(async (user) => {
   }
 });
 
+console.log('User model attributes:', Object.keys(User.rawAttributes));
 module.exports = User;

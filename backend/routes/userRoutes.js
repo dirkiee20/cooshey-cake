@@ -6,6 +6,7 @@ const {
   getUsers
 } = require('../controllers/userController');
 const { protect, admin } = require('../middleware/authMiddleware');
+const { validateRegistration } = require('../middleware/validationMiddleware');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -15,7 +16,7 @@ const generateToken = (id) => {
   });
 };
 
-router.route('/').post(registerUser).get(protect, admin, getUsers);
+router.route('/').post(validateRegistration, registerUser).get(protect, admin, getUsers);
 router.post('/login', loginUser);
 
 // Make user admin (temporary route for development)

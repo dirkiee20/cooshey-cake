@@ -2,6 +2,7 @@ const { Order, OrderItem } = require('../models/orderModel');
 const { Cart, CartItem } = require('../models/cartModel');
 const StockTransaction = require('../models/StockTransaction');
 const Product = require('../models/Product');
+const AdminNotificationService = require('../services/adminNotificationService');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Create new order
@@ -82,6 +83,20 @@ const createOrder = asyncHandler(async (req, res) => {
 
         // Update product stock
         await Product.update({ stock: newStock }, { where: { id: item.product.id } });
+
+        // Check for low inventory and notify admin
+        if (newStock <= 5) { // Low inventory threshold
+          try {
+            const product = await Product.findByPk(item.product.id);
+            await AdminNotificationService.notifyLowInventory(item.product.id, {
+              name: product.name,
+              quantity: newStock,
+              previousStock: previousStock
+            });
+          } catch (notificationError) {
+            console.error('Failed to create low inventory notification:', notificationError);
+          }
+        }
     }
 
     // Remove ordered items from cart
@@ -111,6 +126,19 @@ const createOrder = asyncHandler(async (req, res) => {
             }]
         }]
     });
+
+    // Create admin notification for new order
+    try {
+        await AdminNotificationService.notifyNewOrder(order.id, {
+            customerName: populatedOrder.user ? populatedOrder.user.name : 'Unknown',
+            total: populatedOrder.totalAmount,
+            itemCount: items.length,
+            shippingAddress: shippingAddress
+        });
+    } catch (notificationError) {
+        console.error('Failed to create admin notification for new order:', notificationError);
+        // Don't fail the order creation if notification fails
+    }
 
     res.status(201).json({
         order: populatedOrder
@@ -178,6 +206,29 @@ const getOrders = asyncHandler(async (req, res) => {
     res.json(orders);
 });
 
+// @desc    Get user orders
+// @route   GET /api/orders/user
+// @access  Private
+const getUserOrders = asyncHandler(async (req, res) => {
+    const orders = await Order.findAll({
+        where: { userId: req.user.id },
+        include: [{
+            model: require('../models/userModel'),
+            as: 'user',
+            attributes: ['id', 'name']
+        }, {
+            model: OrderItem,
+            as: 'items',
+            include: [{
+                model: require('../models/Product'),
+                as: 'product'
+            }]
+        }],
+        order: [['createdAt', 'DESC']]
+    });
+    res.json(orders);
+});
+
 // @desc    Update order status
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
@@ -194,4 +245,4 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     res.json(order);
 });
 
-module.exports = { createOrder, getOrderById, getOrders, updateOrderStatus };
+module.exports = { createOrder, getOrderById, getOrders, getUserOrders, updateOrderStatus };

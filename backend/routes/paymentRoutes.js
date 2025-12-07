@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Payment = require('../models/Payment');
 const Notification = require('../models/Notification');
+const AdminNotificationService = require('../services/adminNotificationService');
 const { Order } = require('../models/orderModel');
 const upload = require('../middleware/uploadMiddleware');
 const { protect, admin } = require('../middleware/authMiddleware');
@@ -144,11 +145,12 @@ router.put('/:id/status', protect, admin, async (req, res) => {
       where: { id: req.params.id }
     });
 
-    // If payment is confirmed, create notification for the user
-    if (status === 'confirmed') {
-      try {
-        const order = await Order.findByPk(payment.orderId);
-        if (order) {
+    // Create notifications based on payment status
+    try {
+      const order = await Order.findByPk(payment.orderId);
+      if (order) {
+        // User notification
+        if (status === 'confirmed') {
           await Notification.create({
             userId: order.userId,
             message: `Your payment for Order #${payment.orderId} has been confirmed. Your order is now being processed.`,
@@ -158,10 +160,20 @@ router.put('/:id/status', protect, admin, async (req, res) => {
           });
           console.log('Notification created for user:', order.userId);
         }
-      } catch (notificationError) {
-        console.error('Error creating notification:', notificationError);
-        // Don't fail the payment update if notification fails
+
+        // Admin notification for payment issues
+        if (status === 'rejected') {
+          await AdminNotificationService.notifyPaymentIssue(payment.orderId, {
+            message: `Payment rejected for Order #${payment.orderId}. Reason: ${notes || 'No reason provided'}`,
+            amount: payment.amount,
+            paymentMethod: payment.paymentMethod,
+            adminNotes: notes
+          });
+        }
       }
+    } catch (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      // Don't fail the payment update if notification fails
     }
 
     console.log('Payment status updated:', req.params.id);

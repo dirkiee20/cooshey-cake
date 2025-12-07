@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const AdminNotificationService = require('../services/adminNotificationService');
 const jwt = require('jsonwebtoken');
 
 // Generate JWT
@@ -12,7 +13,7 @@ const generateToken = (id) => {
 // @route   POST /api/users
 // @access  Public
 const registerUser = async (req, res) => {
-  const { name, email, password, isAdmin = false } = req.body;
+  const { name, email, password, confirmPassword, isAdmin = false } = req.body;
 
   try {
     const userExists = await User.findOne({ where: { email } });
@@ -29,6 +30,18 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+      // Create admin notification for new user registration
+      try {
+        await AdminNotificationService.notifyNewUser(user.id, {
+          name: user.name,
+          email: user.email,
+          isAdmin: user.isAdmin
+        });
+      } catch (notificationError) {
+        console.error('Failed to create admin notification for new user:', notificationError);
+        // Don't fail the registration if notification fails
+      }
+
       res.status(201).json({
         _id: user.id,
         name: user.name,

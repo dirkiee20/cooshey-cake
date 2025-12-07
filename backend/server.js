@@ -53,6 +53,7 @@ require('./models/Payment');
 require('./models/Log');
 require('./models/StockTransaction');
 require('./models/Notification');
+require('./models/AdminNotification');
 
 // Define associations after all models are loaded
 const { Order } = require('./models/orderModel');
@@ -83,6 +84,7 @@ const logRoutes = require('./routes/logRoutes');
 const stockTransactionRoutes = require('./routes/stockTransactionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const adminNotificationRoutes = require('./routes/adminNotificationRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -135,6 +137,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin/notifications', adminNotificationRoutes);
 
 // This should be the last middleware
 // It will catch any errors from your routes

@@ -104,6 +104,70 @@ const getFullImageUrl = (path) => {
     return path.startsWith('http') ? path : `${SERVER_URL}${path}`;
 };
 
+/**
+ * Flash Notification System
+ */
+function showFlashMessage(message, type = 'info', duration = 5000) {
+  // Remove existing notifications of the same type
+  const existingNotifications = document.querySelectorAll(`.flash-notification.${type}`);
+  existingNotifications.forEach(notification => notification.remove());
+
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `flash-notification ${type}`;
+
+  // Icon based on type
+  const icons = {
+    success: 'ri-checkbox-circle-fill',
+    error: 'ri-error-warning-fill',
+    warning: 'ri-alert-fill',
+    info: 'ri-information-fill'
+  };
+
+  notification.innerHTML = `
+    <div class="icon">
+      <i class="${icons[type] || icons.info}" aria-hidden="true"></i>
+    </div>
+    <div class="content">${message}</div>
+    <button class="close-btn" aria-label="Close notification">
+      <i class="ri-close-line" aria-hidden="true"></i>
+    </button>
+  `;
+
+  // Add to page
+  document.body.appendChild(notification);
+
+  // Handle close button
+  const closeBtn = notification.querySelector('.close-btn');
+  closeBtn.addEventListener('click', () => {
+    removeNotification(notification);
+  });
+
+  // Auto remove after duration
+  if (duration > 0) {
+    setTimeout(() => {
+      if (notification.parentNode) {
+        removeNotification(notification);
+      }
+    }, duration);
+  }
+
+  // Announce to screen readers
+  notification.setAttribute('role', 'alert');
+  notification.setAttribute('aria-live', 'assertive');
+
+  return notification;
+}
+
+function removeNotification(notification) {
+  notification.classList.add('fade-out');
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 300);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   // --- Auth status check & User Dropdown ---
   const loginPopupBtn = document.getElementById('login-popup-btn');
@@ -231,21 +295,105 @@ document.addEventListener("DOMContentLoaded", function () {
           localStorage.setItem('userToken', data.token);
           localStorage.setItem('userInfo', JSON.stringify(data)); // Store the whole user object
 
-          alert('Login successful!');
+          showFlashMessage('Login successful! Welcome back!', 'success');
           console.log('Login successful, reloading page');
-          window.location.reload();
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
 
       } catch (error) {
           console.error('Login error:', error);
-          alert(`Login failed: ${error.message}`);
+          showFlashMessage(`Login failed: ${error.message}`, 'error');
       }
   });
+
+  // Password strength checker
+  const checkPasswordStrength = (password) => {
+      let strength = 0;
+      let feedback = [];
+
+      if (password.length >= 8) strength++;
+      else feedback.push('At least 8 characters');
+
+      if (/[a-z]/.test(password)) strength++;
+      else feedback.push('Lowercase letter');
+
+      if (/[A-Z]/.test(password)) strength++;
+      else feedback.push('Uppercase letter');
+
+      if (/\d/.test(password)) strength++;
+      else feedback.push('Number');
+
+      if (/[@$!%*?&]/.test(password)) strength++;
+      else feedback.push('Special character');
+
+      return { strength, feedback };
+  };
+
+  // Update password strength indicator
+  const updatePasswordStrength = () => {
+      const password = document.getElementById('register-password').value;
+      const strengthFill = document.getElementById('strength-fill');
+      const strengthText = document.getElementById('strength-text');
+
+      const { strength, feedback } = checkPasswordStrength(password);
+
+      strengthFill.className = 'strength-fill';
+
+      if (strength <= 2) {
+          strengthFill.classList.add('weak');
+          strengthText.textContent = 'Weak password';
+          strengthText.style.color = '#dc3545';
+      } else if (strength <= 4) {
+          strengthFill.classList.add('medium');
+          strengthText.textContent = 'Medium password';
+          strengthText.style.color = '#ffc107';
+      } else {
+          strengthFill.classList.add('strong');
+          strengthText.textContent = 'Strong password';
+          strengthText.style.color = '#28a745';
+      }
+  };
+
+  // Add event listener for password input
+  document.getElementById('register-password').addEventListener('input', updatePasswordStrength);
+
+  // Password visibility toggle functionality
+  const togglePasswordVisibility = (inputId, toggleId) => {
+      const input = document.getElementById(inputId);
+      const toggle = document.getElementById(toggleId);
+      const icon = toggle.querySelector('i');
+
+      toggle.addEventListener('click', () => {
+          const isPassword = input.type === 'password';
+          input.type = isPassword ? 'text' : 'password';
+          icon.className = isPassword ? 'ri-eye-off-line' : 'ri-eye-line';
+          toggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+      });
+  };
+
+  // Initialize password toggles
+  togglePasswordVisibility('register-password', 'toggle-password');
+  togglePasswordVisibility('register-confirm-password', 'toggle-confirm-password');
 
   registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('register-name').value;
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
+      const confirmPassword = document.getElementById('register-confirm-password').value;
+
+      // Client-side validation
+      if (password !== confirmPassword) {
+          showFlashMessage('Passwords do not match!', 'error');
+          return;
+      }
+
+      const { strength } = checkPasswordStrength(password);
+      if (strength < 3) {
+          showFlashMessage('Password is too weak. Please ensure it meets the minimum requirements.', 'warning');
+          return;
+      }
 
       try {
           const response = await fetch(`${API_URL}/`, {
@@ -253,22 +401,29 @@ document.addEventListener("DOMContentLoaded", function () {
               headers: {
                   'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ name, email, password })
+              body: JSON.stringify({ name, email, password, confirmPassword })
           });
 
           const data = await response.json();
 
           if (!response.ok) {
-              throw new Error(data.message || 'Failed to register');
+              if (data.errors) {
+                  showFlashMessage(`Registration failed: ${data.errors.join(', ')}`, 'error');
+              } else {
+                  throw new Error(data.message || 'Failed to register');
+              }
+              return;
           }
 
           localStorage.setItem('userToken', data.token);
-          alert('Registration successful!');
-          window.location.reload();
+          showFlashMessage('Registration successful! Welcome to Cooshey Cake!', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
 
       } catch (error) {
           console.error('Registration error:', error);
-          alert(`Registration failed: ${error.message}`);
+          showFlashMessage(`Registration failed: ${error.message}`, 'error');
       }
   });
 
@@ -574,7 +729,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       } catch (error) {
         console.error('Buy now error:', error);
-        alert(`Error: ${error.message}`);
+        showFlashMessage(`Error: ${error.message}`, 'error');
       }
     } else {
       // This is a "Buy Now" button on a product card. Open the detailed view modal.
@@ -657,11 +812,11 @@ document.addEventListener("DOMContentLoaded", function () {
           throw new Error(errorData.message || 'Failed to add item to cart');
         }
 
-        alert('Item added to cart successfully!');
+        showFlashMessage('Item added to cart successfully!', 'success');
 
       } catch (error) {
         console.error('Add to cart error:', error);
-        alert(`Error: ${error.message}`);
+        showFlashMessage(`Error: ${error.message}`, 'error');
       }
     }
   };
