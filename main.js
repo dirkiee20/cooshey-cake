@@ -188,11 +188,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (userInfo.isAdmin) {
       adminDashboardLink.style.display = 'block';
-      // Hide customer-specific links like "My Orders" for admins
-      const myOrdersLink = document.getElementById('my-orders-link');
-      if (myOrdersLink) {
-        myOrdersLink.style.display = 'none';
-      }
 
       // Hide the cart icon for admin users
       const cartIconLink = document.querySelector('a[href="cart.html"]');
@@ -213,14 +208,6 @@ document.addEventListener("DOMContentLoaded", function () {
       window.location.reload();
     });
 
-    // My Orders functionality
-    const myOrdersLink = document.getElementById('my-orders-link');
-    if (myOrdersLink) {
-      myOrdersLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        loadUserOrders();
-      });
-    }
 
     userDropdownToggle.addEventListener('click', () => {
       userDropdownMenu.classList.toggle('show');
@@ -388,6 +375,7 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   // Initialize password toggles
+  togglePasswordVisibility('login-password', 'toggle-login-password');
   togglePasswordVisibility('register-password', 'toggle-password');
   togglePasswordVisibility('register-confirm-password', 'toggle-confirm-password');
 
@@ -644,13 +632,6 @@ document.addEventListener("DOMContentLoaded", function () {
     btn.addEventListener('click', () => {
       if (subscribeModal) subscribeModal.classList.remove("show-modal");
       if (notificationsModal) notificationsModal.classList.remove("show-modal");
-      const myOrdersModal = document.getElementById('my-orders-modal');
-      if (myOrdersModal) {
-        myOrdersModal.classList.remove("show-modal");
-        // Restore focus to the trigger button
-        const myOrdersLink = document.getElementById('my-orders-link');
-        if (myOrdersLink) myOrdersLink.focus();
-      }
     });
   });
 
@@ -682,7 +663,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const viewProductModal = document.getElementById("view-product-modal");
   if (viewProductModal) {
     const viewProductCloseBtn = viewProductModal.querySelector(".close-btn");
-    
+
     const closeViewProductModal = () => {
       if (viewProductModal) viewProductModal.classList.remove("show-modal");
     };

@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const Product = require('../models/Product');
 const Transaction = require('../models/Transaction');
 const StockTransaction = require('../models/StockTransaction');
 const upload = require('../middleware/uploadMiddleware');
 const multer = require('multer');
+const { protect } = require('../middleware/authMiddleware');
 
 // @route   POST /api/upload
 // @desc    Upload image
@@ -28,7 +30,10 @@ router.get('/', async (req, res) => {
     }
 
     const products = await Product.findAll({
-      where: filter
+      where: {
+        ...filter,
+        stock: { [Op.gt]: 0 }
+      }
     });
 
     // Create absolute image URLs
@@ -291,6 +296,22 @@ router.delete('/', async (req, res) => {
     }
 
     res.json({ msg: `${deletedRowsCount} products removed successfully.` });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// @route   GET /api/transactions
+// @desc    Get all transactions
+// @access  Protected
+router.get('/transactions', protect, async (req, res) => {
+  try {
+    const transactions = await Transaction.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json(transactions);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: 'Server Error' });

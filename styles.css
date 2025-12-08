@@ -2714,12 +2714,14 @@ footer {
 
 .password-input-container input {
   flex: 1;
-  padding-right: 50px; /* Make room for the toggle button */
+  padding-right: 40px; /* Make room for the toggle button */
 }
 
 .password-toggle {
   position: absolute;
-  right: 10px;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: var(--text-light);

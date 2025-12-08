@@ -721,30 +721,6 @@ const InventoryTab = (function() {
             if (category !== product.category) changes.push(`category to "${category}"`);
             if (imageFile) changes.push(`image`);
 
-            // Handle stock changes separately
-            const oldStock = parseInt(product.stock);
-            const newStock = parseInt(stock);
-            const stockChanged = oldStock !== newStock;
-
-            if (stockChanged) {
-                // Create stock transaction log
-                try {
-                    const stockAction = newStock > oldStock ? 'stock-in' : 'stock-out';
-                    const quantity = Math.abs(newStock - oldStock);
-
-                    await window.AdminAPI.createLog({
-                        action: stockAction,
-                        entityType: stockAction,
-                        entityId: productId,
-                        entityName: name,
-                        details: `Stock ${stockAction.replace('-', ' ')}: ${quantity} units (${oldStock} → ${newStock})`,
-                        adminName: 'Admin'
-                    });
-                } catch (logError) {
-                    console.error('Failed to log stock transaction:', logError);
-                }
-            }
-
             // Log other product updates (if any)
             if (changes.length > 0) {
                 const details = `Updated ${changes.join(', ')}`;

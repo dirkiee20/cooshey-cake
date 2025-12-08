@@ -126,8 +126,28 @@ const LoggingTab = (function() {
         }
     }
 
-    // Combine logs and stock transactions into unified activities
-    function combineActivities(logs, stockTransactions) {
+    // Fetch transactions
+    async function fetchTransactions() {
+        try {
+            const response = await fetch('/api/transactions', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch transactions');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('LoggingTab: Failed to fetch transactions:', error);
+            return [];
+        }
+    }
+
+    // Combine logs, stock transactions, and transactions into unified activities
+    function combineActivities(logs, stockTransactions, transactions) {
         const activities = [];
 
         // Add logs
@@ -162,6 +182,20 @@ const LoggingTab = (function() {
             });
         });
 
+        // Add transactions
+        transactions.forEach(transaction => {
+            activities.push({
+                id: `transaction-${transaction.id}`,
+                createdAt: transaction.createdAt,
+                adminName: 'System', // Transaction doesn't have admin association
+                action: transaction.type.replace('_', '-'), // stock_in -> stock-in
+                entityType: transaction.type.replace('_', '-'), // stock_in -> stock-in
+                entityName: transaction.productName,
+                details: `${transaction.type.replace('_', ' ').toUpperCase()}: ${Math.abs(transaction.quantityChange)} units (${transaction.previousStock} → ${transaction.newStock})`,
+                type: 'stock'
+            });
+        });
+
         // Sort by createdAt descending
         return activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
@@ -171,17 +205,19 @@ const LoggingTab = (function() {
         try {
             console.log('LoggingTab: Loading logs and stock transactions data');
 
-            // Fetch both logs and stock transactions
-            const [logs, stockTransactions] = await Promise.all([
+            // Fetch logs, stock transactions, and transactions
+            const [logs, stockTransactions, transactions] = await Promise.all([
                 window.AdminAPI.getLogs(),
-                fetchStockTransactions()
+                fetchStockTransactions(),
+                fetchTransactions()
             ]);
 
             console.log('LoggingTab: Logs received:', logs?.length || 0);
             console.log('LoggingTab: Stock transactions received:', stockTransactions?.length || 0);
+            console.log('LoggingTab: Transactions received:', transactions?.length || 0);
 
             // Combine and format the data
-            const combinedActivities = combineActivities(logs || [], stockTransactions || []);
+            const combinedActivities = combineActivities(logs || [], stockTransactions || [], transactions || []);
             state.logs = combinedActivities;
 
             state.currentPage = 1;
