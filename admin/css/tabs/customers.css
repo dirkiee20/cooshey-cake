@@ -73,6 +73,11 @@
     color: var(--white);
 }
 
+.status-badge.admin {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
 /* Join Date */
 .customers-table td:nth-child(4) {
     color: var(--gray-600);

@@ -563,33 +563,35 @@ const InventoryTab = (function() {
 
     // Delete product
     async function deleteProduct(productId) {
-        if (!confirm('Are you sure you want to delete this product?')) return;
+        window.AdminUtils.showConfirmDialog('Are you sure you want to delete this product?', async () => {
+            const product = state.products.find(p => p.id === productId);
+            const productName = product ? product.name : 'Unknown Product';
 
-        const product = state.products.find(p => p.id === productId);
-        const productName = product ? product.name : 'Unknown Product';
-
-        try {
-            await window.AdminAPI.deleteProduct(productId);
-
-            // Log the action
             try {
-                await window.AdminAPI.createLog({
-                    action: 'delete',
-                    entityType: 'product',
-                    entityId: productId,
-                    entityName: productName,
-                    details: `Deleted product`,
-                    adminName: 'Admin'
-                });
-            } catch (logError) {
-                console.error('Failed to log product deletion:', logError);
-            }
+                await window.AdminAPI.deleteProduct(productId);
 
-            window.AdminUtils.showToast('Product deleted successfully', 'success');
-            await loadData();
-        } catch (error) {
-            window.AdminUtils.showToast('Failed to delete product', 'error');
-        }
+                // Log the action
+                try {
+                    await window.AdminAPI.createLog({
+                        action: 'delete',
+                        entityType: 'product',
+                        entityId: productId,
+                        entityName: productName,
+                        details: `Deleted product`,
+                        adminName: 'Admin'
+                    });
+                } catch (logError) {
+                    console.error('Failed to log product deletion:', logError);
+                }
+
+                window.AdminUtils.showToast('Product deleted successfully', 'success');
+                await loadData();
+            } catch (error) {
+                window.AdminUtils.showToast('Failed to delete product', 'error');
+            }
+        }, () => {
+            // Cancelled, do nothing
+        });
     }
 
     // Add new product with enhanced error handling

@@ -10,16 +10,27 @@
         }
 
         init() {
+            console.log('AdminRouter: Initializing');
+
             // Check authentication first
-            if (!window.AdminAuth.checkAuth()) {
+            console.log('AdminRouter: Checking authentication');
+            const isAuthenticated = window.AdminAuth.checkAuth();
+            console.log('AdminRouter: Authentication check result:', isAuthenticated);
+
+            if (!isAuthenticated) {
+                console.log('AdminRouter: Not authenticated, stopping initialization');
                 return;
             }
 
+            console.log('AdminRouter: Authentication passed, proceeding with initialization');
             this.bindEvents();
             this.loadTab('dashboard'); // Load default tab
+            console.log('AdminRouter: Initialization complete');
         }
 
         bindEvents() {
+            console.log('AdminRouter: Binding events');
+
             // Sidebar navigation
             document.querySelectorAll('.nav-item[data-section]').forEach(item => {
                 item.addEventListener('click', (e) => {
@@ -49,15 +60,39 @@
                 });
             }
 
+            // Profile dropdown functionality
+            const userProfile = document.querySelector('.user-profile');
+            const profileDropdown = document.querySelector('.profile-dropdown');
+
+            if (userProfile && profileDropdown) {
+                userProfile.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!userProfile.contains(e.target)) {
+                        profileDropdown.classList.remove('show');
+                    }
+                });
+            }
+
             // Logout functionality
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    // Add confirmation dialog
-                    if (confirm('Are you sure you want to logout?')) {
-                        window.AdminAuth.logout();
+                    // Close dropdown first
+                    if (profileDropdown) {
+                        profileDropdown.classList.remove('show');
                     }
+                    // Add confirmation dialog
+                    window.AdminUtils.showConfirmDialog('Are you sure you want to logout?', () => {
+                        window.AdminAuth.logout();
+                    }, () => {
+                        // Cancelled, do nothing
+                    });
                 });
             }
 
@@ -70,14 +105,6 @@
                     searchTimeout = setTimeout(() => {
                         this.performGlobalSearch(e.target.value);
                     }, 300);
-                });
-            }
-
-            // Notification button
-            const notificationBtn = document.getElementById('notificationBtn');
-            if (notificationBtn) {
-                notificationBtn.addEventListener('click', () => {
-                    this.toggleNotifications();
                 });
             }
         }
@@ -412,84 +439,6 @@
             }
         }
 
-        // Toggle notifications panel
-        toggleNotifications() {
-            // Create or toggle notifications dropdown
-            let notificationPanel = document.getElementById('notificationPanel');
-
-            if (!notificationPanel) {
-                notificationPanel = document.createElement('div');
-                notificationPanel.id = 'notificationPanel';
-                notificationPanel.className = 'notification-panel';
-                notificationPanel.innerHTML = `
-                    <div class="notification-header">
-                        <h4>Notifications</h4>
-                        <button class="mark-all-read">Mark all read</button>
-                    </div>
-                    <div class="notification-list">
-                        <div class="notification-item unread">
-                            <div class="notification-icon">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p>New order received</p>
-                                <span class="notification-time">2 min ago</span>
-                            </div>
-                        </div>
-                        <div class="notification-item">
-                            <div class="notification-icon">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p>New customer registered</p>
-                                <span class="notification-time">1 hour ago</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                document.body.appendChild(notificationPanel);
-
-                // Position the panel
-                const notificationBtn = document.getElementById('notificationBtn');
-                const rect = notificationBtn.getBoundingClientRect();
-                notificationPanel.style.top = (rect.bottom + 10) + 'px';
-                notificationPanel.style.right = (window.innerWidth - rect.right) + 'px';
-
-                // Add event listeners
-                notificationPanel.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('mark-all-read')) {
-                        this.markAllNotificationsRead();
-                    }
-                });
-
-                // Close when clicking outside
-                document.addEventListener('click', (e) => {
-                    if (!notificationPanel.contains(e.target) && e.target !== notificationBtn) {
-                        notificationPanel.remove();
-                    }
-                });
-            } else {
-                notificationPanel.remove();
-            }
-        }
-
-        // Mark all notifications as read
-        markAllNotificationsRead() {
-            const unreadItems = document.querySelectorAll('.notification-item.unread');
-            unreadItems.forEach(item => {
-                item.classList.remove('unread');
-            });
-
-            // Update notification badge
-            const badge = document.getElementById('notificationBadge');
-            if (badge) {
-                badge.style.display = 'none';
-                badge.textContent = '0';
-            }
-
-            window.AdminUtils.showToast('All notifications marked as read', 'success');
-        }
     }
 
     // Initialize router when DOM is ready

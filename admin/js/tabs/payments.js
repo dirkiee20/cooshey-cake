@@ -228,6 +228,9 @@
                     <button class="btn btn-secondary" onclick="PaymentsTab.viewDetails(${payment.id})">
                         <i class="fas fa-eye"></i> Details
                     </button>
+                    <button class="btn btn-info" onclick="PaymentsTab.printReceipt(${payment.id})">
+                        <i class="fas fa-print"></i> Print Receipt
+                    </button>
                 </div>
 
                 ${payment.notes ? `
@@ -312,37 +315,39 @@
 
     // Confirm payment
     async function confirmPayment(paymentId) {
-        if (!confirm('Are you sure you want to confirm this payment?')) return;
-
-        const payment = state.payments.find(p => p.id === paymentId);
-        const paymentName = payment ? `Order #${payment.orderId}` : `Payment #${paymentId}`;
-
-        try {
-            await window.AdminAPI.updatePaymentStatus(paymentId, 'confirmed');
-            await window.AdminAPI.updateOrderStatus(payment.orderId, 'Confirmed');
+        window.AdminUtils.showConfirmDialog('Are you sure you want to confirm this payment?', async () => {
+            const payment = state.payments.find(p => p.id === paymentId);
+            const paymentName = payment ? `Order #${payment.orderId}` : `Payment #${paymentId}`;
 
             try {
-                await window.AdminAPI.createLog({
-                    action: 'confirm',
-                    entityType: 'payment',
-                    entityId: paymentId,
-                    entityName: paymentName,
-                    details: `Confirmed payment for order #${payment?.orderId || 'unknown'} - inventory updated`,
-                    adminName: 'Admin'
-                });
-            } catch (logError) {
-                console.error('Failed to log payment confirmation:', logError);
+                await window.AdminAPI.updatePaymentStatus(paymentId, 'confirmed');
+                await window.AdminAPI.updateOrderStatus(payment.orderId, 'Confirmed');
+
+                try {
+                    await window.AdminAPI.createLog({
+                        action: 'confirm',
+                        entityType: 'payment',
+                        entityId: paymentId,
+                        entityName: paymentName,
+                        details: `Confirmed payment for order #${payment?.orderId || 'unknown'} - inventory updated`,
+                        adminName: 'Admin'
+                    });
+                } catch (logError) {
+                    console.error('Failed to log payment confirmation:', logError);
+                }
+
+                // Clear dashboard cache to refresh stats (preserve auth token)
+                localStorage.removeItem('dashboardStats');
+
+                window.AdminUtils.showToast('Payment confirmed successfully - inventory updated', 'success');
+                await loadData();
+            } catch (error) {
+                console.error('Failed to confirm payment:', error);
+                window.AdminUtils.showToast('Failed to confirm payment', 'error');
             }
-
-            // Clear dashboard cache to refresh stats (preserve auth token)
-            localStorage.removeItem('dashboardStats');
-
-            window.AdminUtils.showToast('Payment confirmed successfully - inventory updated', 'success');
-            await loadData();
-        } catch (error) {
-            console.error('Failed to confirm payment:', error);
-            window.AdminUtils.showToast('Failed to confirm payment', 'error');
-        }
+        }, () => {
+            // Cancelled, do nothing
+        });
     }
 
     // Reject payment
@@ -438,6 +443,158 @@
         };
     }
 
+    // Print receipt
+    function printReceipt(paymentId) {
+        const payment = state.payments.find(p => p.id === paymentId);
+        if (!payment) return;
+
+        // Create printable receipt content
+        const receiptWindow = window.open('', '_blank', 'width=800,height=600');
+        const receiptContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Payment Receipt - Order #${payment.orderId}</title>
+                <style>
+                    body {
+                        font-family: 'Courier New', monospace;
+                        margin: 20px;
+                        line-height: 1.6;
+                    }
+                    .receipt-header {
+                        text-align: center;
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 20px;
+                        margin-bottom: 20px;
+                    }
+                    .receipt-header h1 {
+                        margin: 0;
+                        font-size: 24px;
+                    }
+                    .receipt-header p {
+                        margin: 5px 0;
+                        color: #666;
+                    }
+                    .receipt-details {
+                        margin-bottom: 20px;
+                    }
+                    .detail-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 5px 0;
+                        border-bottom: 1px dotted #ccc;
+                    }
+                    .detail-row:last-child {
+                        border-bottom: none;
+                    }
+                    .label {
+                        font-weight: bold;
+                    }
+                    .total-row {
+                        border-top: 2px solid #000;
+                        padding-top: 10px;
+                        margin-top: 10px;
+                        font-weight: bold;
+                        font-size: 18px;
+                    }
+                    .status-badge {
+                        display: inline-block;
+                        padding: 4px 12px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                    }
+                    .status-confirmed {
+                        background: #d4edda;
+                        color: #155724;
+                    }
+                    .status-pending {
+                        background: #fff3cd;
+                        color: #856404;
+                    }
+                    .status-rejected {
+                        background: #f8d7da;
+                        color: #721c24;
+                    }
+                    .footer {
+                        margin-top: 30px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #666;
+                    }
+                    @media print {
+                        body { margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="receipt-header">
+                    <h1>Cooshey Cake</h1>
+                    <p>Payment Receipt</p>
+                    <p>Order #${payment.orderId}</p>
+                </div>
+
+                <div class="receipt-details">
+                    <div class="detail-row">
+                        <span class="label">Payment ID:</span>
+                        <span>${payment.id}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Order ID:</span>
+                        <span>${payment.orderId}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Payment Method:</span>
+                        <span>${payment.paymentMethod.toUpperCase()}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Reference Number:</span>
+                        <span>${payment.gcashReference || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Payment Date:</span>
+                        <span>${new Date(payment.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Payment Time:</span>
+                        <span>${new Date(payment.createdAt).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Status:</span>
+                        <span class="status-badge status-${payment.status}">${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}</span>
+                    </div>
+                    ${payment.notes ? `
+                    <div class="detail-row">
+                        <span class="label">Notes:</span>
+                        <span>${payment.notes}</span>
+                    </div>
+                    ` : ''}
+                    <div class="detail-row total-row">
+                        <span class="label">Amount Paid:</span>
+                        <span>₱${parseFloat(payment.amount).toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for your business!</p>
+                    <p>Printed on: ${new Date().toLocaleString()}</p>
+                </div>
+            </body>
+            </html>
+        `;
+
+        receiptWindow.document.write(receiptContent);
+        receiptWindow.document.close();
+
+        // Wait for content to load then print
+        receiptWindow.onload = function() {
+            receiptWindow.print();
+            // Close the window after printing (optional)
+            // receiptWindow.close();
+        };
+    }
+
     // View receipt in modal
     function viewReceipt(imageUrl) {
         const modal = document.createElement('div');
@@ -466,7 +623,8 @@
         confirmPayment,
         rejectPayment,
         viewDetails,
-        viewReceipt
+        viewReceipt,
+        printReceipt
     };
 
 })();

@@ -119,7 +119,7 @@ const OrdersTab = (function() {
         if (filteredOrders.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="empty-state">
+                    <td colspan="6" class="empty-state">
                         <i class="fas fa-shopping-cart"></i>
                         <h3>No orders found</h3>
                         <p>No orders match the current filters.</p>
@@ -143,14 +143,6 @@ const OrdersTab = (function() {
                 <td>${window.AdminUtils.formatCurrency(order.totalAmount)}</td>
                 <td><span class="status-badge ${order.status.toLowerCase()}">${order.status}</span></td>
                 <td>${window.AdminUtils.formatDate(order.createdAt)}</td>
-                <td>
-                    <button class="btn-icon" onclick="OrdersTab.viewOrderDetails(${order.id})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-icon" onclick="OrdersTab.updateOrderStatus(${order.id}, '${order.status}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </td>
             </tr>
         `).join('');
 
@@ -227,107 +219,10 @@ const OrdersTab = (function() {
         }
     }
 
-    // View order details
-    function viewOrderDetails(orderId) {
-        const order = state.orders.find(o => o.id === orderId);
-        if (!order) return;
-
-        // Create modal content
-        const modalContent = `
-            <div class="order-header">
-                <h3>Order #${order.id}</h3>
-                <span class="order-status ${order.status.toLowerCase()}">${order.status}</span>
-            </div>
-
-            <div class="order-info">
-                <div class="info-section">
-                    <h4>Customer Information</h4>
-                    <p><strong>Name:</strong> ${order.user ? window.AdminUtils.sanitizeInput(order.user.name) : 'N/A'}</p>
-                    <p><strong>Email:</strong> ${order.user ? window.AdminUtils.sanitizeInput(order.user.email) : 'N/A'}</p>
-                </div>
-
-                <div class="info-section">
-                    <h4>Order Details</h4>
-                    <p><strong>Date:</strong> ${window.AdminUtils.formatDate(order.createdAt)}</p>
-                    <p><strong>Payment:</strong> ${order.paymentMethod || 'N/A'}</p>
-                    <p><strong>Shipping:</strong> ${order.shippingAddress || 'N/A'}</p>
-                </div>
-            </div>
-
-            <div class="order-items">
-                <h4>Items Ordered</h4>
-                <div class="items-list">
-                    ${order.items.map(item => `
-                        <div class="order-item">
-                            <img src="${item.product ? item.product.imageUrl : ''}" alt="${item.product ? item.product.name : ''}" class="item-image">
-                            <div class="item-details">
-                                <h5>${item.product ? window.AdminUtils.sanitizeInput(item.product.name) : 'Unknown Product'}</h5>
-                                <p>Quantity: ${item.quantity}</p>
-                                <p>Price: ${window.AdminUtils.formatCurrency(item.product ? item.product.price : 0)}</p>
-                            </div>
-                            <div class="item-total">
-                                ${window.AdminUtils.formatCurrency((item.product ? item.product.price : 0) * item.quantity)}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-
-            <div class="order-total">
-                <div class="total-row">
-                    <span>Subtotal:</span>
-                    <span>${window.AdminUtils.formatCurrency(order.totalAmount)}</span>
-                </div>
-                <div class="total-row final">
-                    <span><strong>Total:</strong></span>
-                    <span><strong>${window.AdminUtils.formatCurrency(order.totalAmount)}</strong></span>
-                </div>
-            </div>
-        `;
-
-        // Show modal (this would need a modal system)
-        window.AdminUtils.showToast('Order details modal coming soon', 'info');
-        console.log('Order details:', modalContent);
-    }
-
-    // Update order status
-    async function updateOrderStatus(orderId, currentStatus) {
-        const newStatus = prompt('Enter new status:', currentStatus);
-        if (!newStatus || newStatus === currentStatus) return;
-
-        const order = state.orders.find(o => o.id === orderId);
-        const orderName = order ? `Order #${orderId}` : `Order #${orderId}`;
-
-        try {
-            await window.AdminAPI.updateOrderStatus(orderId, newStatus);
-
-            // Log the action
-            try {
-                await window.AdminAPI.createLog({
-                    action: 'update',
-                    entityType: 'order',
-                    entityId: orderId,
-                    entityName: orderName,
-                    details: `Changed status from ${currentStatus} to ${newStatus}`,
-                    adminName: 'Admin'
-                });
-            } catch (logError) {
-                console.error('Failed to log order status update:', logError);
-            }
-
-            window.AdminUtils.showToast('Order status updated successfully', 'success');
-            await loadData();
-        } catch (error) {
-            window.AdminUtils.showToast('Failed to update order status', 'error');
-        }
-    }
-
     // Export public API
     const publicAPI = {
         init: init,
-        loadData: loadData,
-        viewOrderDetails: viewOrderDetails,
-        updateOrderStatus: updateOrderStatus
+        loadData: loadData
     };
 
     return publicAPI;

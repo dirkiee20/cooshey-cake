@@ -67,12 +67,9 @@ const CustomersTab = (function() {
                 <td><span class="status-badge active">Active</span></td>
                 <td>${window.AdminUtils.formatDate(customer.createdAt)}</td>
                 <td>
-                    <button class="btn-icon" onclick="CustomersTab.viewCustomer(${customer.id})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-icon" onclick="CustomersTab.editCustomer(${customer.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                    ${!customer.isAdmin ? `<button class="btn-icon" onclick="CustomersTab.promoteCustomer(${customer.id})" title="Promote to Admin">
+                        <i class="fas fa-user-shield"></i>
+                    </button>` : '<span class="status-badge admin">Admin</span>'}
                 </td>
             </tr>
         `).join('');
@@ -150,28 +147,47 @@ const CustomersTab = (function() {
         }
     }
 
-    // View customer details
-    function viewCustomer(customerId) {
+    // Promote customer to admin
+    async function promoteCustomer(customerId) {
         const customer = state.customers.find(c => c.id === customerId);
-        if (customer) {
-            window.AdminUtils.showToast(`View customer: ${customer.name}`, 'info');
-        }
-    }
+        if (!customer) return;
 
-    // Edit customer
-    function editCustomer(customerId) {
-        const customer = state.customers.find(c => c.id === customerId);
-        if (customer) {
-            window.AdminUtils.showToast(`Edit customer: ${customer.name}`, 'info');
-        }
+        const confirmed = await window.AdminUtils.showConfirmDialog(
+            `Are you sure you want to promote ${customer.name} to admin? This action cannot be undone.`,
+            async () => {
+                try {
+                    await window.AdminAPI.makeUserAdmin(customerId);
+
+                    // Log the action
+                    try {
+                        await window.AdminAPI.createLog({
+                            action: 'promote',
+                            entityType: 'user',
+                            entityId: customerId,
+                            entityName: customer.name,
+                            details: `Promoted user ${customer.name} to admin`,
+                            adminName: 'Admin'
+                        });
+                    } catch (logError) {
+                        console.error('Failed to log promotion:', logError);
+                    }
+
+                    window.AdminUtils.showToast(`${customer.name} has been promoted to admin`, 'success');
+                    await loadData(); // Refresh the data
+                } catch (error) {
+                    console.error('Error promoting customer:', error);
+                    window.AdminUtils.showToast('Failed to promote user to admin', 'error');
+                }
+            },
+            () => {} // Cancel callback
+        );
     }
 
     // Export public API
     const publicAPI = {
         init: init,
         loadData: loadData,
-        viewCustomer: viewCustomer,
-        editCustomer: editCustomer
+        promoteCustomer: promoteCustomer
     };
 
     return publicAPI;

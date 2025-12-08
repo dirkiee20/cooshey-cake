@@ -2,6 +2,8 @@
 (function() {
     'use strict';
 
+    console.log('Admin shared JS file loaded');
+
     // Configuration
     const CONFIG = {
         API_BASE: 'http://localhost:3001/api',
@@ -174,7 +176,75 @@
                     ripple.remove();
                 }, 600);
             });
-        }
+        },
+
+        // Custom styled confirm dialog
+        showConfirmDialog: (message, onConfirm, onCancel) => {
+            // Create modal elements
+            const backdrop = document.createElement('div');
+            backdrop.className = 'confirm-modal-backdrop';
+
+            const modal = document.createElement('div');
+            modal.className = 'confirm-modal';
+
+            modal.innerHTML = `
+                <div class="confirm-modal-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Confirm Action</h3>
+                </div>
+                <div class="confirm-modal-body">
+                    <p>${message}</p>
+                </div>
+                <div class="confirm-modal-actions">
+                    <button class="btn btn-cancel" id="confirmCancel">Cancel</button>
+                    <button class="btn btn-confirm" id="confirmOk">Confirm</button>
+                </div>
+            `;
+
+            backdrop.appendChild(modal);
+            document.body.appendChild(backdrop);
+
+            // Focus management
+            const cancelBtn = modal.querySelector('#confirmCancel');
+            const confirmBtn = modal.querySelector('#confirmOk');
+
+            // Handle button clicks
+            const handleCancel = () => {
+                document.body.removeChild(backdrop);
+                if (onCancel) onCancel();
+            };
+
+            const handleConfirm = () => {
+                document.body.removeChild(backdrop);
+                if (onConfirm) onConfirm();
+            };
+
+            cancelBtn.addEventListener('click', handleCancel);
+            confirmBtn.addEventListener('click', handleConfirm);
+
+            // Handle escape key
+            const handleKeydown = (e) => {
+                if (e.key === 'Escape') {
+                    handleCancel();
+                } else if (e.key === 'Enter') {
+                    handleConfirm();
+                }
+            };
+
+            document.addEventListener('keydown', handleKeydown);
+
+            // Remove event listener when modal is removed
+            const observer = new MutationObserver(() => {
+                if (!document.body.contains(backdrop)) {
+                    document.removeEventListener('keydown', handleKeydown);
+                    observer.disconnect();
+                }
+            });
+            observer.observe(document.body, { childList: true });
+
+            // Focus the cancel button initially
+            setTimeout(() => cancelBtn.focus(), 100);
+        },
     };
 
     // API Service
@@ -318,7 +388,7 @@
 
         logout() {
             localStorage.removeItem(CONFIG.TOKEN_KEY);
-            window.location.href = '/';
+            window.location.href = '../index.html';
         },
 
         checkAuth() {
@@ -481,6 +551,281 @@
         accessibilityUtils.handleKeyboardNavigation();
     });
 
+    // Admin Notifications
+    const adminNotifications = {
+        panel: null,
+        badge: null,
+        button: null,
+        isLoading: false,
+
+        init() {
+            console.log('AdminNotifications: Initializing');
+            this.button = document.getElementById('adminNotificationBtn');
+            this.badge = document.getElementById('notificationBadge');
+
+            console.log('AdminNotifications: Button element:', this.button);
+            console.log('AdminNotifications: Badge element:', this.badge);
+            console.log('AdminNotifications: Auth headers present:', !!localStorage.getItem(CONFIG.TOKEN_KEY));
+
+            if (this.button) {
+                this.button.addEventListener('click', (e) => {
+                    console.log('AdminNotifications: Bell button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.togglePanel();
+                });
+                console.log('AdminNotifications: Button event listener added');
+            } else {
+                console.error('AdminNotifications: Button not found');
+            }
+
+            // Create notification panel
+            this.createPanel();
+
+            // Load initial count
+            this.loadUnreadCount();
+
+            // Set up periodic refresh
+            setInterval(() => this.loadUnreadCount(), 30000); // Refresh every 30 seconds
+        },
+
+        createPanel() {
+            this.panel = document.createElement('div');
+            this.panel.className = 'notification-panel';
+            this.panel.id = 'adminNotificationPanel';
+
+            this.panel.innerHTML = `
+                <div class="notification-header">
+                    <h3>Notifications</h3>
+                    <button class="mark-all-read" id="markAllReadBtn">Mark All Read</button>
+                </div>
+                <div class="notification-list" id="notificationList">
+                    <div class="notification-empty">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No notifications yet</p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(this.panel);
+
+            // Add event listeners
+            const markAllReadBtn = this.panel.querySelector('#markAllReadBtn');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', () => this.markAllAsRead());
+            }
+
+            // Close panel when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!this.button.contains(e.target) && !this.panel.contains(e.target)) {
+                    this.hidePanel();
+                }
+            });
+        },
+
+        async loadUnreadCount() {
+            if (this.isLoading) return;
+
+            console.log('AdminNotifications: Starting loadUnreadCount');
+            try {
+                this.isLoading = true;
+                console.log('AdminNotifications: Making fetch request to unread-count');
+                const response = await fetch(`${CONFIG.API_BASE}/admin/notifications/unread-count`, {
+                    headers: utils.getAuthHeaders()
+                });
+
+                console.log('AdminNotifications: Unread count response status:', response.status);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('AdminNotifications: Unread count data:', data);
+                    this.updateBadge(data.count);
+                } else {
+                    console.error('AdminNotifications: Failed to load unread count, status:', response.status);
+                    const errorText = await response.text();
+                    console.error('AdminNotifications: Error response:', errorText);
+                }
+            } catch (error) {
+                console.error('AdminNotifications: Error loading unread count:', error);
+            } finally {
+                this.isLoading = false;
+                console.log('AdminNotifications: loadUnreadCount completed');
+            }
+        },
+
+        updateBadge(count) {
+            if (!this.badge) return;
+
+            if (count > 0) {
+                this.badge.textContent = count > 99 ? '99+' : count;
+                this.badge.style.display = 'flex';
+            } else {
+                this.badge.style.display = 'none';
+            }
+        },
+
+        togglePanel() {
+            console.log('AdminNotifications: togglePanel called');
+            console.log('AdminNotifications: Panel has show class:', this.panel.classList.contains('show'));
+            if (this.panel.classList.contains('show')) {
+                this.hidePanel();
+            } else {
+                this.showPanel();
+            }
+        },
+
+        showPanel() {
+            console.log('AdminNotifications: showPanel called, adding show class');
+            this.panel.classList.add('show');
+            this.loadNotifications();
+        },
+
+        hidePanel() {
+            this.panel.classList.remove('show');
+        },
+
+        async loadNotifications() {
+            console.log('AdminNotifications: loadNotifications called');
+            const listElement = this.panel.querySelector('#notificationList');
+            if (!listElement) {
+                console.error('AdminNotifications: notificationList element not found');
+                return;
+            }
+
+            console.log('AdminNotifications: Setting loading spinner');
+            listElement.innerHTML = '<div class="loading-spinner">Loading notifications...</div>';
+
+            try {
+                console.log('AdminNotifications: Making fetch request for notifications');
+                const response = await fetch(`${CONFIG.API_BASE}/admin/notifications?limit=20`, {
+                    headers: utils.getAuthHeaders()
+                });
+
+                console.log('AdminNotifications: Notifications response status:', response.status);
+                if (response.ok) {
+                    const notifications = await response.json();
+                    console.log('AdminNotifications: Received notifications:', notifications.length, 'items');
+                    this.displayNotifications(notifications);
+                } else {
+                    console.error('AdminNotifications: Failed to load notifications, status:', response.status);
+                    const errorText = await response.text();
+                    console.error('AdminNotifications: Error response:', errorText);
+                    listElement.innerHTML = '<div class="notification-empty"><i class="fas fa-exclamation-triangle"></i><p>Failed to load notifications</p></div>';
+                }
+            } catch (error) {
+                console.error('AdminNotifications: Error loading notifications:', error);
+                listElement.innerHTML = '<div class="notification-empty"><i class="fas fa-exclamation-triangle"></i><p>Error loading notifications</p></div>';
+            }
+        },
+
+        displayNotifications(notifications) {
+            const listElement = this.panel.querySelector('#notificationList');
+
+            if (notifications.length === 0) {
+                listElement.innerHTML = '<div class="notification-empty"><i class="fas fa-bell-slash"></i><p>No notifications yet</p></div>';
+                return;
+            }
+
+            listElement.innerHTML = notifications.map(notification => `
+                <div class="notification-item ${!notification.isRead ? 'unread' : ''}" data-id="${notification.id}">
+                    <div class="notification-icon">
+                        <i class="fas fa-${this.getNotificationIcon(notification.type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h4>${notification.title}</h4>
+                        <p>${notification.message}</p>
+                        <div class="notification-time">${utils.formatDate(notification.createdAt)}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            listElement.querySelectorAll('.notification-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.dataset.id;
+                    this.markAsRead(id);
+                    this.navigateToRelatedItem(item, notifications.find(n => n.id == id));
+                });
+            });
+        },
+
+        getNotificationIcon(type) {
+            const icons = {
+                new_order: 'shopping-cart',
+                new_user: 'user-plus',
+                payment_issue: 'exclamation-triangle',
+                low_inventory: 'box',
+                system_error: 'exclamation-circle',
+                general: 'bell'
+            };
+            return icons[type] || 'bell';
+        },
+
+        async markAsRead(notificationId) {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE}/admin/notifications/${notificationId}/read`, {
+                    method: 'PUT',
+                    headers: utils.getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    // Update UI
+                    const item = this.panel.querySelector(`[data-id="${notificationId}"]`);
+                    if (item) {
+                        item.classList.remove('unread');
+                    }
+                    // Refresh count
+                    this.loadUnreadCount();
+                }
+            } catch (error) {
+                console.error('AdminNotifications: Error marking as read:', error);
+            }
+        },
+
+        async markAllAsRead() {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE}/admin/notifications/read-all`, {
+                    method: 'PUT',
+                    headers: utils.getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    // Update UI
+                    this.panel.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                    });
+                    // Refresh count
+                    this.loadUnreadCount();
+                    utils.showToast('All notifications marked as read', 'success');
+                }
+            } catch (error) {
+                console.error('AdminNotifications: Error marking all as read:', error);
+                utils.showToast('Failed to mark notifications as read', 'error');
+            }
+        },
+
+        navigateToRelatedItem(item, notification) {
+            this.hidePanel();
+
+            // Navigate based on notification type and related data
+            if (notification.relatedType && notification.relatedId) {
+                switch (notification.relatedType) {
+                    case 'order':
+                        window.AdminRouter.loadTab('orders');
+                        break;
+                    case 'user':
+                        window.AdminRouter.loadTab('customers');
+                        break;
+                    case 'product':
+                        window.AdminRouter.loadTab('inventory');
+                        break;
+                    case 'payment':
+                        window.AdminRouter.loadTab('payments');
+                        break;
+                }
+            }
+        }
+    };
+
     // Expose makeCurrentUserAdmin globally for console access
     window.makeMeAdmin = async function() {
         try {
@@ -496,9 +841,16 @@
         }
     };
 
+    // Initialize admin notifications when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Admin shared JS loaded, initializing notifications');
+        adminNotifications.init();
+    });
+
     // Make globally available
     window.AdminUtils = { ...utils, ...performanceUtils, ...accessibilityUtils };
     window.AdminAPI = api;
     window.AdminAuth = auth;
+    window.AdminNotifications = adminNotifications;
 
 })();
