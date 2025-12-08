@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Transaction = require('../models/Transaction');
+const StockTransaction = require('../models/StockTransaction');
 const upload = require('../middleware/uploadMiddleware');
 const multer = require('multer');
 
@@ -213,7 +214,7 @@ router.put('/:id', uploadUpdate, async (req, res) => {
 // @access  Public (for now)
 router.delete('/:id', async (req, res) => {
   console.log('=== DELETE PRODUCT START ===');
-  console.log('Product ID:', req.params.id);
+  console.log('Product ID:', req.params.id, 'Type:', typeof req.params.id);
   try {
     // Get the product before deleting
     const product = await Product.findByPk(req.params.id);
@@ -221,21 +222,30 @@ router.delete('/:id', async (req, res) => {
       console.log('Product not found');
       return res.status(404).json({ msg: 'Product not found' });
     }
-    console.log('Product found:', product.name);
+    console.log('Product found:', product.name, 'ID:', product.id, 'Type:', typeof product.id);
 
     // Log transaction
     console.log('Creating transaction...');
-    const transaction = await Transaction.create({
+    const transactionData = {
       action: 'delete',
       type: 'stock_out',
-      productId: product.id,
+      productId: null, // Product is being deleted, so no foreign key
       productName: product.name,
       productDetails: `Price: ₱${product.price}, Category: ${product.category}, Stock removed: ${product.stock}`,
       quantityChange: -product.stock,
       previousStock: product.stock,
       newStock: 0,
-    });
+    };
+    console.log('Transaction data:', transactionData);
+    const transaction = await Transaction.create(transactionData);
     console.log('Transaction created:', transaction.id);
+
+    // Delete associated StockTransactions before deleting the product
+    console.log('Deleting associated StockTransactions...');
+    const deletedStockTransactions = await StockTransaction.destroy({
+      where: { productId: product.id }
+    });
+    console.log('StockTransactions deleted:', deletedStockTransactions);
 
     const deletedRowsCount = await Product.destroy({
       where: { id: req.params.id }
@@ -250,7 +260,12 @@ router.delete('/:id', async (req, res) => {
     res.json({ msg: 'Product removed successfully' });
   } catch (err) {
     console.error('DELETE PRODUCT ERROR:', err.message);
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Error stack:', err.stack);
+    console.error('Error name:', err.name);
+    if (err.errors) {
+      console.error('Validation errors:', err.errors);
+    }
+    res.status(500).json({ message: 'Server Error', details: err.message });
   }
 });
 

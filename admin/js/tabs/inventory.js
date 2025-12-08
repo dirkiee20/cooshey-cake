@@ -110,6 +110,9 @@ const InventoryTab = (function() {
             );
         }
 
+        // Filter out products with zero or negative stock
+        filteredProducts = filteredProducts.filter(product => product.stock > 0);
+
         grid.innerHTML = filteredProducts.map(product => `
             <div class="product-card" data-id="${product.id}">
                 <div class="product-image">
@@ -117,9 +120,6 @@ const InventoryTab = (function() {
                     <div class="product-actions">
                         <button class="btn-icon edit-btn" onclick="InventoryTab.editProduct(${product.id})">
                             <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon delete-btn" onclick="InventoryTab.deleteProduct(${product.id})">
-                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>

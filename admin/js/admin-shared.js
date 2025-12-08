@@ -617,7 +617,7 @@
 
             // Close panel when clicking outside
             document.addEventListener('click', (e) => {
-                if (!this.button.contains(e.target) && !this.panel.contains(e.target)) {
+                if ((this.button && !this.button.contains(e.target)) && !this.panel.contains(e.target)) {
                     this.hidePanel();
                 }
             });

@@ -19,7 +19,7 @@ const Transaction = sequelize.define('Transaction', {
   },
   productId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: 'Products',
       key: 'id'
