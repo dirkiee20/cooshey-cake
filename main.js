@@ -168,6 +168,213 @@ function removeNotification(notification) {
   }, 300);
 }
 
+/**
+ * Load and update notification badge
+ */
+async function loadNotifications() {
+  const userToken = localStorage.getItem('userToken');
+  if (!userToken) return;
+
+  try {
+    const response = await fetch('http://localhost:3001/api/notifications/unread-count', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const badge = document.getElementById('notification-badge');
+      if (badge) {
+        if (data.count > 0) {
+          badge.textContent = data.count > 99 ? '99+' : data.count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load notification count:', error);
+  }
+}
+
+/**
+ * Load and update order badge (count of pending orders)
+ */
+async function loadOrderBadge() {
+  const userToken = localStorage.getItem('userToken');
+  if (!userToken) return;
+
+  try {
+    const response = await fetch('http://localhost:3001/api/orders/user', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+
+    if (response.ok) {
+      const orders = await response.json();
+      const pendingOrders = orders.filter(order => order.status === 'Pending').length;
+      const badge = document.getElementById('orders-badge');
+      if (badge) {
+        if (pendingOrders > 0) {
+          badge.textContent = pendingOrders > 99 ? '99+' : pendingOrders;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load order badge:', error);
+  }
+}
+
+/**
+ * Load and update cart badge (total quantity of items in cart)
+ */
+async function loadCartBadge() {
+  const userToken = localStorage.getItem('userToken');
+  if (!userToken) return;
+
+  try {
+    const response = await fetch('http://localhost:3001/api/cart', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+
+    if (response.ok) {
+      const cart = await response.json();
+      const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+      const badge = document.getElementById('cart-badge');
+      if (badge) {
+        if (totalQuantity > 0) {
+          badge.textContent = totalQuantity > 99 ? '99+' : totalQuantity;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load cart badge:', error);
+  }
+}
+
+/**
+ * Load and display notifications in modal
+ */
+async function loadNotificationsModal() {
+  const userToken = localStorage.getItem('userToken');
+  if (!userToken) return;
+
+  const modal = document.getElementById('notifications-modal');
+  const listEl = document.getElementById('notifications-list');
+  const markAllBtn = document.getElementById('mark-all-read-btn');
+
+  if (!modal || !listEl) return;
+
+  // Show loading
+  listEl.innerHTML = '<p>Loading notifications...</p>';
+  modal.style.display = 'flex';
+
+  try {
+    const response = await fetch('http://localhost:3001/api/notifications', {
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+
+    if (response.ok) {
+      const notifications = await response.json();
+
+      if (notifications.length === 0) {
+        listEl.innerHTML = '<p>No notifications yet.</p>';
+        markAllBtn.style.display = 'none';
+      } else {
+        listEl.innerHTML = notifications.map(notification => `
+          <div class="notification-item ${!notification.isRead ? 'unread' : ''}" data-id="${notification.id}">
+            <div class="notification-content">
+              <p>${notification.message}</p>
+              <div class="notification-time">${new Date(notification.createdAt).toLocaleDateString()}</div>
+            </div>
+            ${!notification.isRead ? '<button class="mark-read-btn" data-id="' + notification.id + '">Mark as Read</button>' : ''}
+          </div>
+        `).join('');
+
+        markAllBtn.style.display = 'inline-block';
+
+        // Add event listeners for mark as read buttons
+        listEl.querySelectorAll('.mark-read-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = e.target.dataset.id;
+            await markNotificationAsRead(id);
+          });
+        });
+      }
+    } else {
+      listEl.innerHTML = '<p>Failed to load notifications.</p>';
+      markAllBtn.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Failed to load notifications:', error);
+    listEl.innerHTML = '<p>Error loading notifications.</p>';
+    markAllBtn.style.display = 'none';
+  }
+}
+
+/**
+ * Mark a single notification as read
+ */
+async function markNotificationAsRead(notificationId) {
+  const userToken = localStorage.getItem('userToken');
+  if (!userToken) return;
+
+  try {
+    const response = await fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+
+    if (response.ok) {
+      // Reload notifications and update badge
+      loadNotificationsModal();
+      loadNotifications();
+    }
+  } catch (error) {
+    console.error('Failed to mark notification as read:', error);
+  }
+}
+
+/**
+ * Mark all notifications as read
+ */
+async function markAllNotificationsAsRead() {
+  const userToken = localStorage.getItem('userToken');
+  if (!userToken) return;
+
+  try {
+    const response = await fetch('http://localhost:3001/api/notifications/read-all', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${userToken}`
+      }
+    });
+
+    if (response.ok) {
+      // Reload notifications and update badge
+      loadNotificationsModal();
+      loadNotifications();
+    }
+  } catch (error) {
+    console.error('Failed to mark all notifications as read:', error);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   // --- Auth status check & User Dropdown ---
   const loginPopupBtn = document.getElementById('login-popup-btn');
@@ -208,6 +415,18 @@ document.addEventListener("DOMContentLoaded", function () {
       window.location.reload();
     });
 
+    // Load badges for logged-in user
+    loadNotifications();
+    loadOrderBadge();
+    loadCartBadge();
+
+    // Notification button event listener
+    const notificationBtn = document.getElementById('notification-btn');
+    if (notificationBtn) {
+      notificationBtn.addEventListener('click', () => {
+        loadNotificationsModal();
+      });
+    }
 
     userDropdownToggle.addEventListener('click', () => {
       userDropdownMenu.classList.toggle('show');
@@ -299,6 +518,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
           showFlashMessage('Login successful! Welcome back!', 'success');
           console.log('Login successful, reloading page');
+          // Load cart badge before reload
+          loadCartBadge();
           setTimeout(() => {
             window.location.reload();
           }, 1500);
@@ -420,6 +641,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
           localStorage.setItem('userToken', data.token);
           showFlashMessage('Registration successful! Welcome to Cooshey Cake!', 'success');
+          // Load cart badge before reload
+          loadCartBadge();
           setTimeout(() => {
             window.location.reload();
           }, 1500);
@@ -431,209 +654,20 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 
-  // --- Notifications Logic ---
-
-  const notificationBtn = document.getElementById("notification-btn");
-  const subscribeModal = document.getElementById("notification-modal");
-  const notificationsModal = document.getElementById("notifications-modal");
-  const notificationsList = document.getElementById("notifications-list");
-  const markAllReadBtn = document.getElementById("mark-all-read-btn");
-
-  // Function to load and display notifications
-  const loadNotifications = async () => {
-    const userToken = localStorage.getItem('userToken');
-    if (!userToken) return;
-
-    try {
-      const response = await fetch('http://localhost:3001/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${userToken}`
-        }
-      });
-
-      if (response.ok) {
-        const notifications = await response.json();
-        displayNotifications(notifications);
-      }
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
-    }
-  };
-
-  // Function to display notifications
-  const displayNotifications = (notifications) => {
-    if (!notificationsList) return;
-
-    if (notifications.length === 0) {
-      notificationsList.innerHTML = '<p>No notifications yet.</p>';
-      markAllReadBtn.style.display = 'none';
-      return;
-    }
-
-    notificationsList.innerHTML = notifications.map(notification => `
-      <div class="notification-item ${notification.isRead ? 'read' : 'unread'}" data-id="${notification.id}">
-        <div class="notification-content">
-          <p>${notification.message}</p>
-          <small>${new Date(notification.createdAt).toLocaleString()}</small>
-        </div>
-        ${!notification.isRead ? '<button class="mark-read-btn" data-id="' + notification.id + '">Mark as Read</button>' : ''}
-      </div>
-    `).join('');
-
-    markAllReadBtn.style.display = 'block';
-
-    // Add event listeners for mark as read buttons
-    document.querySelectorAll('.mark-read-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const notificationId = e.target.dataset.id;
-        await markNotificationAsRead(notificationId);
-        loadNotifications();
-      });
-    });
-  };
-
-  // Function to mark notification as read
-  const markNotificationAsRead = async (notificationId) => {
-    const userToken = localStorage.getItem('userToken');
-    if (!userToken) return;
-
-    try {
-      await fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${userToken}`
-        }
-      });
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  };
-
-  // Function to mark all notifications as read
-  const markAllNotificationsAsRead = async () => {
-    const userToken = localStorage.getItem('userToken');
-    if (!userToken) return;
-
-    try {
-      await fetch('http://localhost:3001/api/notifications/read-all', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${userToken}`
-        }
-      });
-      loadNotifications();
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
-    }
-  };
-
-  // Handle notification button click
-  if (notificationBtn) {
-    notificationBtn.addEventListener('click', () => {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-      if (userInfo) {
-        // Logged in user - show notifications
-        loadNotifications();
-        if (notificationsModal) notificationsModal.classList.add("show-modal");
-      } else {
-        // Not logged in - show subscribe modal
-        if (subscribeModal) subscribeModal.classList.add("show-modal");
-      }
-    });
-  }
-
-  // Handle mark all read button
-  if (markAllReadBtn) {
-    markAllReadBtn.addEventListener('click', markAllNotificationsAsRead);
-  }
-
-  // My Orders functionality
-  const loadUserOrders = async () => {
-    const userToken = localStorage.getItem('userToken');
-    if (!userToken) {
-      showFlashMessage('Please login to view your orders.', 'error');
-      return;
-    }
-
-    const myOrdersModal = document.getElementById('my-orders-modal');
-    const ordersList = document.getElementById('orders-list');
-
-    if (!myOrdersModal || !ordersList) return;
-
-    try {
-      ordersList.innerHTML = '<div class="loading-spinner">Loading your orders...</div>';
-
-      const response = await fetch('http://localhost:3001/api/orders/user', {
-        headers: {
-          'Authorization': `Bearer ${userToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load orders');
-      }
-
-      const orders = await response.json();
-
-      if (orders.length === 0) {
-         ordersList.innerHTML = '<li><p>You have no orders yet.</p></li>';
-       } else {
-         ordersList.innerHTML = orders.map(order => {
-           const orderDate = new Date(order.createdAt).toLocaleDateString();
-           const statusClass = order.status.toLowerCase();
-           const itemsCount = order.items ? order.items.length : 0;
-
-           return `
-             <li class="order-card" role="listitem" aria-labelledby="order-${order.id}-title">
-               <div class="order-header">
-                 <h4 id="order-${order.id}-title">Order #${order.id}</h4>
-                 <span class="order-status ${statusClass}" aria-label="Order status: ${order.status}">${order.status}</span>
-               </div>
-               <div class="order-details">
-                 <p><strong>Date:</strong> <time datetime="${order.createdAt}">${orderDate}</time></p>
-                 <p><strong>Total:</strong> ₱${parseFloat(order.totalAmount).toFixed(2)}</p>
-                 <p><strong>Items:</strong> ${itemsCount}</p>
-                 <p><strong>Shipping:</strong> ${order.shippingAddress}</p>
-               </div>
-               <div class="order-items" role="list" aria-label="Items in order ${order.id}">
-                 ${order.items ? order.items.map(item => `
-                   <div class="order-item" role="listitem">
-                     <div class="order-item-details">
-                       <h5 class="order-item-name">${item.product ? item.product.name : 'Unknown Product'}</h5>
-                       <div class="order-item-meta">
-                         <span class="order-item-quantity" aria-label="Quantity: ${item.quantity}">Qty: ${item.quantity}</span>
-                         <span class="order-item-price" aria-label="Price: ₱${item.product ? parseFloat(item.product.price).toFixed(2) : '0.00'}">₱${item.product ? parseFloat(item.product.price).toFixed(2) : '0.00'}</span>
-                       </div>
-                     </div>
-                   </div>
-                 `).join('') : ''}
-               </div>
-             </li>
-           `;
-         }).join('');
-       }
-
-      myOrdersModal.classList.add('show-modal');
-
-      // Focus management for accessibility
-      myOrdersModal.focus();
-      myOrdersModal.setAttribute('tabindex', '-1');
-
-    } catch (error) {
-      console.error('Failed to load orders:', error);
-      ordersList.innerHTML = '<p>Failed to load orders. Please try again later.</p>';
-      showFlashMessage('Failed to load orders. Please try again.', 'error');
-    }
-  };
-
   // Close modals
   const closeBtns = document.querySelectorAll(".close-btn");
   closeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       if (subscribeModal) subscribeModal.classList.remove("show-modal");
-      if (notificationsModal) notificationsModal.classList.remove("show-modal");
+      if (notificationsModal) notificationsModal.style.display = 'none';
     });
   });
+
+  // Mark all notifications as read
+  const markAllReadBtn = document.getElementById('mark-all-read-btn');
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', markAllNotificationsAsRead);
+  }
 
   // When the user clicks anywhere outside of the modal content, close it
   window.onclick = function (event) {
@@ -643,6 +677,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const viewProductModal = document.getElementById("view-product-modal");
     if (viewProductModal && event.target == viewProductModal) {
       viewProductModal.classList.remove("show-modal");
+    }
+    const notificationsModal = document.getElementById("notifications-modal");
+    if (notificationsModal && event.target == notificationsModal) {
+      notificationsModal.style.display = 'none';
     }
   };
 
@@ -655,6 +693,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const viewProductModal = document.getElementById("view-product-modal");
       if (viewProductModal && viewProductModal.classList.contains("show-modal")) {
         viewProductModal.classList.remove("show-modal");
+      }
+      const notificationsModal = document.getElementById("notifications-modal");
+      if (notificationsModal && notificationsModal.style.display === 'flex') {
+        notificationsModal.style.display = 'none';
       }
     }
   });
@@ -896,6 +938,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         showFlashMessage('Item added to cart successfully!', 'success');
 
+        // Update cart badge
+        loadCartBadge();
+
       } catch (error) {
         console.error('Add to cart error:', error);
         showFlashMessage(`Error: ${error.message}`, 'error');
@@ -929,14 +974,17 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!popularGrid) return;
 
     try {
+      console.log('Fetching popular products...');
       // Fetch products from your backend API
       const response = await fetch(
         "http://localhost:3001/api/products?category=popular"
       );
+      console.log('Popular products response status:', response.status);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const products = await response.json();
+      console.log('Popular products received:', products);
 
       // Clear any placeholder content
       popularGrid.innerHTML = '';
@@ -964,10 +1012,10 @@ document.addEventListener("DOMContentLoaded", function () {
           <div class="popular__card__footer">
             <h4>₱${parseFloat(product.price).toFixed(2)}</h4>
             <div class="action-btns">
-              <button class="btn add-to-cart-btn" data-product-id="${product.id}" title="Add to Cart"><i class="ri-shopping-cart-line"></i></button>
-                <button class="btn btn-buy-now" data-product-id="${product.id}" data-product-name="${
-                  product.name
-                }" data-product-price="${parseFloat(product.price).toFixed(2)}">Buy Now</button>
+              ${product.stock > 0 ? `
+                <button class="btn add-to-cart-btn" data-product-id="${product.id}" title="Add to Cart"><i class="ri-shopping-cart-line"></i></button>
+                <button class="btn btn-buy-now" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${parseFloat(product.price).toFixed(2)}">Buy Now</button>
+              ` : '<span class="out-of-stock-text">Out of Stock</span>'}
             </div>
           </div>
         `;
@@ -991,13 +1039,16 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!bestSellerGrid) return;
 
     try {
+      console.log('Fetching best sellers...');
       const response = await fetch(
         "http://localhost:3001/api/products?category=best-seller"
       );
+      console.log('Best sellers response status:', response.status);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const products = await response.json();
+      console.log('Best sellers received:', products);
 
       bestSellerGrid.innerHTML = "";
 
@@ -1013,10 +1064,12 @@ document.addEventListener("DOMContentLoaded", function () {
             <p class="section__description">${product.description || "A delicious treat."}</p>
             <h3>₱${parseFloat(product.price).toFixed(2)}</h3>
             <div class="discover__card__btn">
-              <button class="btn add-to-cart-btn" data-product-id="${product.id}" title="Add to Cart"><i class="ri-shopping-cart-line"></i></button>
+              ${product.stock > 0 ? `
+                <button class="btn add-to-cart-btn" data-product-id="${product.id}" title="Add to Cart"><i class="ri-shopping-cart-line"></i></button>
                 <button class="btn btn-buy-now" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${parseFloat(product.price).toFixed(2)}">
                   Buy Now
                 </button>
+              ` : '<span class="out-of-stock-text">Out of Stock</span>'}
             </div>
           </div>
         `;
@@ -1040,14 +1093,17 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!mainProductsGrid) return;
 
     try {
+      console.log('Fetching main products...');
       // Fetch main products from your backend API
       const response = await fetch(
         "http://localhost:3001/api/products?category=main-product"
       );
+      console.log('Main products response status:', response.status);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const products = await response.json();
+      console.log('Main products received:', products);
 
       // Clear any placeholder content
       mainProductsGrid.innerHTML = '';
@@ -1060,8 +1116,10 @@ document.addEventListener("DOMContentLoaded", function () {
           <div class="main-product__image-container">
             <img src="${getFullImageUrl(product.imageUrl)}" alt="${product.name}" />
             <div class="main-product__actions">
-              <button class="btn add-to-cart-btn" data-product-id="${product.id}" title="Add to Cart"><i class="ri-shopping-cart-line"></i></button>
-              <button class="btn btn-buy-now" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${parseFloat(product.price).toFixed(2)}">Buy Now</button>
+              ${product.stock > 0 ? `
+                <button class="btn add-to-cart-btn" data-product-id="${product.id}" title="Add to Cart"><i class="ri-shopping-cart-line"></i></button>
+                <button class="btn btn-buy-now" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${parseFloat(product.price).toFixed(2)}">Buy Now</button>
+              ` : '<span class="out-of-stock-text">Out of Stock</span>'}
             </div>
           </div>
           <div class="main-product__content">

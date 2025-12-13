@@ -1,6 +1,6 @@
 # Cooshey Cake eCommerce
 
-A full-stack eCommerce website for a cake shop built with HTML, CSS, JavaScript, Node.js, Express, and MongoDB.
+A full-stack eCommerce website for a cake shop built with HTML, CSS, JavaScript, Node.js, Express, and Mysql.
 
 ## Features
 
@@ -39,37 +39,43 @@ cooshey-cake-eccomerce/
 ## Prerequisites
 
 - Node.js (v14 or higher)
-- MongoDB
+- Mysql
 - Web browser
 - npm (Node Package Manager)
 
 ## Getting Started
 
 1. Clone the repository:
+
 ```bash
 git clone [repository-url]
 cd cooshey-cake-eccomerce
 ```
 
 2. Set up the backend:
+
 ```bash
 cd backend
 npm install
 ```
 
 3. Create a `.env` file in the backend directory with the following variables:
-```
-PORT=3001
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
-```
+
+````
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=""
+DB_NAME=cooshey_db
+DB_PORT=3306
+JWT_SECRET=yourjwtsecretkeyy
 
 4. Start the backend server:
 ```bash
 npm start
-```
+````
 
 5. Open the frontend:
+
 - Navigate to the project root directory
 - Open `index.html` in your web browser
 - For admin access, open `admin.html`
@@ -87,7 +93,7 @@ npm start
 
 ### As an Admin
 
-1.  **Admin Login:** To access the admin dashboard, you first need to register a user and then manually set the `isAdmin` flag to `true` for that user in the MongoDB database.
+1.  **Admin Login:** To access the admin dashboard, you first need to register a user and then manually set the `isAdmin` flag to `true` for that user in the Mysql database.
 2.  **Access Dashboard:** Open the `admin.html` file in your browser and log in with your admin credentials.
 3.  **Manage Products:** From the dashboard, you can add, edit, and delete products.
 4.  **View Orders:** View and manage customer orders.
@@ -96,16 +102,19 @@ npm start
 ## API Endpoints
 
 ### Products
+
 - `GET /api/products` - Get all products
 - `POST /api/products` - Create new product (admin)
 - `PUT /api/products/:id` - Update product (admin)
 - `DELETE /api/products/:id` - Delete product (admin)
 
 ### Users
+
 - `POST /api/users/` - Register new user
 - `POST /api/users/login` - Login user
 
 ### Cart
+
 - `GET /api/cart` - Get user's cart
 - `POST /api/cart` - Add item to cart
 - `PUT /api/cart/:productId` - Update cart item

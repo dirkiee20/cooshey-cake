@@ -45,8 +45,9 @@
           </div>
         </div>
 
-        <a href="cart.html" class="btn"><i class="ri-shopping-cart-line"></i></a>
-        <button class="btn" id="notification-btn"><i class="ri-notification-3-fill"></i></button>
+        <a href="orders.html" class="btn"><i class="ri-shopping-bag-line"></i><span id="orders-badge" class="badge" style="display: none;"></span></a>
+        <a href="cart.html" class="btn"><i class="ri-shopping-cart-line"></i><span id="cart-badge" class="badge" style="display: none;"></span></a>
+        <button class="btn" id="notification-btn"><i class="ri-notification-3-fill"></i><span id="notification-badge" class="badge" style="display: none;"></span></button>
       </div>
     </nav>
 
@@ -253,17 +254,6 @@
       </div>
     </div>
 
-    <!-- My Orders Modal -->
-    <div id="my-orders-modal" class="modal" role="dialog" aria-labelledby="my-orders-title" aria-describedby="orders-description">
-      <div class="modal-content">
-        <span class="close-btn" aria-label="Close My Orders">&times;</span>
-        <h2 id="my-orders-title" class="section__header">My Orders</h2>
-        <div id="orders-description" class="sr-only">View and manage your order history</div>
-        <ul id="orders-list" role="list" aria-label="Your orders">
-          <!-- Orders will be loaded here -->
-        </ul>
-      </div>
-    </div>
 
     <footer id="contact">
       <div class="section__container footer__container">
