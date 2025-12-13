@@ -78,12 +78,12 @@ router.get('/:id', async (req, res) => {
 
 // @route   POST /api/products
 // @desc    Add a new product
-// @access  Public (for now, this will be admin-only later)
+// @access  Admin only
 const uploadProduct = upload.fields([
   { name: 'image', maxCount: 1 }
 ]);
 
-router.post('/', uploadProduct, async (req, res) => {
+router.post('/', protect, admin, uploadProduct, async (req, res) => {
     console.log('=== ADD PRODUCT REQUEST RECEIVED ===');
     console.log('Request method:', req.method, 'path:', req.path);
     console.log('=== ADD PRODUCT REQUEST START ===');
@@ -152,12 +152,12 @@ router.post('/', uploadProduct, async (req, res) => {
 });
 // @route   PUT /api/products/:id
 // @desc    Update (edit) a product
-// @access  Public (for now)
+// @access  Admin only
 const uploadUpdate = upload.fields([
   { name: 'image', maxCount: 1 }
 ]);
 
-router.put('/:id', uploadUpdate, async (req, res) => {
+router.put('/:id', protect, admin, uploadUpdate, async (req, res) => {
   try {
     const { name, price, description, category, stock } = req.body;
 
@@ -216,8 +216,8 @@ router.put('/:id', uploadUpdate, async (req, res) => {
 
 // @route   DELETE /api/products/:id
 // @desc    Delete a product
-// @access  Public (for now)
-router.delete('/:id', async (req, res) => {
+// @access  Admin only
+router.delete('/:id', protect, admin, async (req, res) => {
   console.log('=== DELETE PRODUCT START ===');
   console.log('Product ID:', req.params.id, 'Type:', typeof req.params.id);
   try {
@@ -276,8 +276,8 @@ router.delete('/:id', async (req, res) => {
 
 // @route   DELETE /api/products
 // @desc    Delete multiple products
-// @access  Public (for now)
-router.delete('/', async (req, res) => {
+// @access  Admin only
+router.delete('/', protect, admin, async (req, res) => {
   const { productIds } = req.body;
 
   if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {

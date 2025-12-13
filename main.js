@@ -702,6 +702,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // --- View Product Modal Logic ---
+  let currentViewProduct = null; // Store the current product being viewed
   const viewProductModal = document.getElementById("view-product-modal");
   if (viewProductModal) {
     const viewProductCloseBtn = viewProductModal.querySelector(".close-btn");
@@ -724,8 +725,13 @@ document.addEventListener("DOMContentLoaded", function () {
         if (currentValue < 1) {
             currentValue = 1;
         }
+        if (currentViewProduct && currentValue > currentViewProduct.stock) {
+            currentValue = currentViewProduct.stock;
+            showFlashMessage(`Only ${currentViewProduct.stock} items available in stock.`, 'warning');
+        }
         quantityInput.value = currentValue;
         quantityMinusBtn.disabled = currentValue === 1;
+        quantityPlusBtn.disabled = currentViewProduct && currentValue >= currentViewProduct.stock;
     };
 
     if (quantityMinusBtn) {
@@ -733,6 +739,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     if (quantityPlusBtn) {
         quantityPlusBtn.addEventListener("click", () => updateViewProductQuantity(1));
+    }
+
+    // Handle manual input changes
+    if (quantityInput) {
+        quantityInput.addEventListener("input", (e) => {
+            let value = parseInt(e.target.value, 10);
+            if (isNaN(value) || value < 1) {
+                value = 1;
+            }
+            if (currentViewProduct && value > currentViewProduct.stock) {
+                value = currentViewProduct.stock;
+                showFlashMessage(`Only ${currentViewProduct.stock} items available in stock.`, 'warning');
+            }
+            e.target.value = value;
+            quantityMinusBtn.disabled = value === 1;
+            quantityPlusBtn.disabled = currentViewProduct && value >= currentViewProduct.stock;
+        });
     }
 
     if (viewProductCloseBtn) {
@@ -752,6 +775,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const viewProductModal = document.getElementById("view-product-modal");
     if (!viewProductModal) return;
 
+    currentViewProduct = product; // Store the current product
+
     // Populate common details
     document.getElementById("view-product-image").src = getFullImageUrl(product.imageUrl);
     document.getElementById("view-product-image").alt = product.name;
@@ -767,6 +792,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const quantityContainer = document.querySelector('.view-product__quantity');
     const quantityInput = document.getElementById("view-product-quantity-input");
     const quantityMinusBtn = document.getElementById("view-product-quantity-minus");
+    const quantityPlusBtn = document.getElementById("view-product-quantity-plus");
 
     // Handle stock status and button visibility
     if (product.stock > 0) {
@@ -780,9 +806,11 @@ document.addEventListener("DOMContentLoaded", function () {
       preOrderBtn.style.display = 'none';
       quantityContainer.style.display = 'block';
 
-      // Reset quantity
+      // Reset quantity and set max
       quantityInput.value = 1;
+      quantityInput.max = product.stock;
       quantityMinusBtn.disabled = true;
+      quantityPlusBtn.disabled = product.stock <= 1;
 
       // Set data attributes for actions
       reserveBtn.dataset.productId = product.id;
@@ -830,6 +858,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const productId = buyNowBtn.dataset.productId;
       const quantityInput = document.getElementById('view-product-quantity-input');
       const quantity = parseInt(quantityInput.value, 10);
+
+      // Check stock availability
+      if (currentViewProduct && quantity > currentViewProduct.stock) {
+        showFlashMessage(`Insufficient stock. Only ${currentViewProduct.stock} items available.`, 'error');
+        return;
+      }
 
       try {
         // Fetch the complete product details
@@ -918,6 +952,23 @@ document.addEventListener("DOMContentLoaded", function () {
         // Optionally, open the login modal
         const loginRegisterModal = document.getElementById('login-register-modal');
         if (loginRegisterModal) loginRegisterModal.style.display = 'flex';
+        return;
+      }
+
+      // Check stock availability
+      try {
+        const productResponse = await fetch(`http://localhost:3001/api/products/${productId}`);
+        if (!productResponse.ok) {
+          throw new Error('Product not found');
+        }
+        const product = await productResponse.json();
+        if (product.stock <= 0) {
+          showFlashMessage('This item is out of stock.', 'error');
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to check product stock:', error);
+        showFlashMessage('Unable to verify stock availability. Please try again.', 'error');
         return;
       }
 
