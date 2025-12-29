@@ -10,6 +10,8 @@ const LoggingTab = (function() {
         currentFilter: 'all',
         searchTerm: '',
         actionFilter: '',
+        startDate: '',
+        endDate: '',
         currentPage: 1,
         itemsPerPage: 20,
         totalPages: 1
@@ -56,6 +58,24 @@ const LoggingTab = (function() {
         if (actionFilter) {
             actionFilter.addEventListener('change', (e) => {
                 state.actionFilter = e.target.value;
+                renderLogs();
+            });
+        }
+
+        // Date filters
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+
+        if (startDateInput) {
+            startDateInput.addEventListener('change', (e) => {
+                state.startDate = e.target.value;
+                renderLogs();
+            });
+        }
+
+        if (endDateInput) {
+            endDateInput.addEventListener('change', (e) => {
+                state.endDate = e.target.value;
                 renderLogs();
             });
         }
@@ -286,6 +306,25 @@ const LoggingTab = (function() {
                 activity.details?.toLowerCase().includes(state.searchTerm) ||
                 activity.id.toString().includes(state.searchTerm)
             );
+        }
+
+        // Apply date filter
+        if (state.startDate || state.endDate) {
+            filtered = filtered.filter(activity => {
+                const activityDate = new Date(activity.createdAt);
+                const start = state.startDate ? new Date(state.startDate) : null;
+                const end = state.endDate ? new Date(state.endDate) : null;
+
+                // Set end date to end of day
+                if (end) {
+                    end.setHours(23, 59, 59, 999);
+                }
+
+                if (start && activityDate < start) return false;
+                if (end && activityDate > end) return false;
+
+                return true;
+            });
         }
 
         return filtered;

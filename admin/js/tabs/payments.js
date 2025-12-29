@@ -7,6 +7,9 @@
         payments: [],
         currentFilter: 'all',
         searchTerm: '',
+        dateRange: 'all',
+        customStartDate: '',
+        customEndDate: '',
         currentPage: 1,
         itemsPerPage: 12,
         totalPages: 1
@@ -40,6 +43,49 @@
                 state.searchTerm = e.target.value.toLowerCase();
                 renderPayments();
             });
+        }
+
+        // Date range filter
+        const dateRangeSelect = document.getElementById('dateRange');
+        if (dateRangeSelect) {
+            dateRangeSelect.addEventListener('change', (e) => {
+                const value = e.target.value;
+                state.dateRange = value;
+
+                if (value === 'custom') {
+                    showDateRangeModal();
+                } else {
+                    state.customStartDate = '';
+                    state.customEndDate = '';
+                    renderPayments();
+                }
+            });
+        }
+
+        // Custom date range modal
+        const applyDateRangeBtn = document.getElementById('applyDateRange');
+        if (applyDateRangeBtn) {
+            applyDateRangeBtn.addEventListener('click', () => {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                if (startDate && endDate) {
+                    state.customStartDate = startDate;
+                    state.customEndDate = endDate;
+                    document.getElementById('dateRangeModal').style.display = 'none';
+                    renderPayments();
+                } else {
+                    window.AdminUtils.showToast('Please select both start and end dates', 'warning');
+                }
+            });
+        }
+    }
+
+    // Show date range modal
+    function showDateRangeModal() {
+        const modal = document.getElementById('dateRangeModal');
+        if (modal) {
+            modal.style.display = 'flex';
         }
     }
 
@@ -151,6 +197,41 @@
             filtered = filtered.filter(payment =>
                 payment.orderId.toString().includes(state.searchTerm)
             );
+        }
+
+        // Apply date filter
+        if (state.dateRange !== 'all') {
+            const now = new Date();
+            let startDate, endDate;
+
+            switch (state.dateRange) {
+                case 'today':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+                    break;
+                case 'week':
+                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    endDate = now;
+                    break;
+                case 'month':
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    endDate = now;
+                    break;
+                case 'custom':
+                    if (state.customStartDate && state.customEndDate) {
+                        startDate = new Date(state.customStartDate);
+                        endDate = new Date(state.customEndDate);
+                        endDate.setHours(23, 59, 59, 999); // Include the entire end date
+                    }
+                    break;
+            }
+
+            if (startDate && endDate) {
+                filtered = filtered.filter(payment => {
+                    const paymentDate = new Date(payment.createdAt);
+                    return paymentDate >= startDate && paymentDate <= endDate;
+                });
+            }
         }
 
         return filtered;
