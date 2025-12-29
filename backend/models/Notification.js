@@ -18,7 +18,7 @@ const Notification = sequelize.define('Notification', {
     allowNull: false,
   },
   type: {
-    type: DataTypes.ENUM('payment_confirmed', 'payment_rejected', 'order_update', 'general'),
+    type: DataTypes.ENUM('payment_confirmed', 'payment_rejected', 'order_update', 'order_processing', 'general'),
     allowNull: false,
     defaultValue: 'general',
   },

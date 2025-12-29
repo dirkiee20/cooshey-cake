@@ -44,11 +44,28 @@ router.get('/stats', async (req, res) => {
       }
     });
 
+    // Get today's sales
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const dailySalesResult = await Payment.sum('amount', {
+      where: {
+        status: 'confirmed',
+        createdAt: {
+          [Op.gte]: today,
+          [Op.lt]: tomorrow
+        }
+      }
+    }) || 0;
+
     res.json({
       totalRevenue: parseFloat(totalRevenueResult),
       totalOrders,
       productsSold: productsSoldResult,
-      totalCustomers
+      totalCustomers,
+      dailySales: parseFloat(dailySalesResult)
     });
   } catch (error) {
     console.error('Error getting dashboard stats:', error);

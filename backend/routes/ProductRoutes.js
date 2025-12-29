@@ -6,7 +6,8 @@ const Transaction = require('../models/Transaction');
 const StockTransaction = require('../models/StockTransaction');
 const upload = require('../middleware/uploadMiddleware');
 const multer = require('multer');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
+console.log('Auth middlewares imported:', { protect: typeof protect, admin: typeof admin });
 
 // @route   POST /api/upload
 // @desc    Upload image

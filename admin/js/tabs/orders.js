@@ -119,7 +119,7 @@ const OrdersTab = (function() {
         if (filteredOrders.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="empty-state">
+                    <td colspan="7" class="empty-state">
                         <i class="fas fa-shopping-cart"></i>
                         <h3>No orders found</h3>
                         <p>No orders match the current filters.</p>
@@ -143,10 +143,57 @@ const OrdersTab = (function() {
                 <td>${window.AdminUtils.formatCurrency(order.totalAmount)}</td>
                 <td><span class="status-badge ${order.status.toLowerCase()}">${order.status}</span></td>
                 <td>${window.AdminUtils.formatDate(order.createdAt)}</td>
+                <td>
+                    <select class="status-select" data-order-id="${order.id}">
+                        <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                        <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                        <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                </td>
             </tr>
         `).join('');
 
+        // Add event listeners for status changes
+        tbody.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', handleStatusChange);
+        });
+
         showPagination(filteredOrders.length);
+    }
+
+    // Handle status change
+    async function handleStatusChange(event) {
+        const select = event.target;
+        const orderId = select.dataset.orderId;
+        const newStatus = select.value;
+
+        try {
+            // Update order status via API
+            await window.AdminAPI.updateOrderStatus(orderId, newStatus);
+
+            // Update the order in state
+            const order = state.orders.find(o => o.id == orderId);
+            if (order) {
+                order.status = newStatus;
+            }
+
+            // Update the status badge
+            const row = select.closest('tr');
+            const statusCell = row.querySelector('td:nth-child(5)');
+            statusCell.innerHTML = `<span class="status-badge ${newStatus.toLowerCase()}">${newStatus}</span>`;
+
+            window.AdminUtils.showToast(`Order #${orderId} status updated to ${newStatus}`, 'success');
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            window.AdminUtils.showToast('Failed to update order status', 'error');
+            // Revert the select to original value
+            const order = state.orders.find(o => o.id == orderId);
+            if (order) {
+                select.value = order.status;
+            }
+        }
     }
 
     // Show pagination

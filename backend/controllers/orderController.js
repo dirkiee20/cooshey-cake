@@ -2,6 +2,7 @@ const { Order, OrderItem } = require('../models/orderModel');
 const { Cart, CartItem } = require('../models/cartModel');
 const StockTransaction = require('../models/StockTransaction');
 const Product = require('../models/Product');
+const Notification = require('../models/Notification');
 const AdminNotificationService = require('../services/adminNotificationService');
 const asyncHandler = require('express-async-handler');
 
@@ -239,8 +240,40 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
+    const oldStatus = order.status;
     order.status = req.body.status;
     await order.save();
+
+    // Create user notification for status changes to Processing, Shipped, or Delivered
+    const statusNotifications = {
+        'Processing': {
+            message: `Order #${order.id} Status: Processing Shipment – Shows that the order has been packed and is ready for delivery or pickup.`,
+            type: 'order_processing'
+        },
+        'Shipped': {
+            message: `Order #${order.id} Status: Shipped – Your order has been shipped and is on its way.`,
+            type: 'order_update'
+        },
+        'Delivered': {
+            message: `Order #${order.id} Status: Delivered – Your order has been successfully delivered.`,
+            type: 'order_update'
+        }
+    };
+
+    if (statusNotifications[req.body.status] && oldStatus !== req.body.status) {
+        try {
+            await Notification.create({
+                userId: order.userId,
+                message: statusNotifications[req.body.status].message,
+                type: statusNotifications[req.body.status].type,
+                relatedId: order.id,
+                relatedType: 'order'
+            });
+        } catch (notificationError) {
+            console.error('Failed to create user notification for order status change:', notificationError);
+            // Don't fail the status update if notification fails
+        }
+    }
 
     res.json(order);
 });

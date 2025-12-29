@@ -52,7 +52,7 @@ const DashboardTab = (function() {
 
             // Check cache first
             const cached = getCachedStats();
-            if (cached && isCacheValid(cached.timestamp)) {
+            if (cached && isCacheValid(cached.timestamp) && cached.stats.dailySales !== undefined) {
                 console.log('Dashboard: Using cached stats');
                 updateStatsUI(cached.stats);
                 return;
@@ -88,6 +88,7 @@ const DashboardTab = (function() {
         updateStatCard('totalOrders', stats.totalOrders);
         updateStatCard('productsSold', stats.productsSold);
         updateStatCard('totalCustomers', stats.totalCustomers);
+        updateStatCard('dailySales', window.AdminUtils.formatCurrency(stats.dailySales || 0));
     }
 
     // Show/hide loading state for stats

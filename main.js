@@ -420,6 +420,13 @@ document.addEventListener("DOMContentLoaded", function () {
     loadOrderBadge();
     loadCartBadge();
 
+    // Set up periodic badge updates for real-time display
+    setInterval(() => {
+      loadNotifications();
+      loadOrderBadge();
+      loadCartBadge();
+    }, 30000); // Update every 30 seconds
+
     // Notification button event listener
     const notificationBtn = document.getElementById('notification-btn');
     if (notificationBtn) {
