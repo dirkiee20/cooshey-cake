@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const orderSummaryItemsEl = document.getElementById('order-summary-items');
     const subtotalEl = document.getElementById('subtotal');
-    const taxesEl = document.getElementById('taxes');
     const totalEl = document.getElementById('total');
     const placeOrderButton = document.getElementById('place-order-button');
 
@@ -68,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const calculateSummary = (items) => {
         if (!items || items.length === 0) {
             subtotalEl.textContent = '₱0.00';
-            taxesEl.textContent = '₱0.00';
             totalEl.textContent = '₱0.00';
             return;
         }
@@ -76,11 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const subtotal = items
             .filter(item => item.product) // Ensure product exists
             .reduce((sum, item) => sum + parseFloat(item.product.price) * item.quantity, 0);
-        const taxes = subtotal * 0.10; // 10% tax
+        const taxes = 0; // No tax applicable
         const total = subtotal + taxes;
 
         subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
-        taxesEl.textContent = `₱${taxes.toFixed(2)}`;
         totalEl.textContent = `₱${total.toFixed(2)}`;
         currentTotal = total;
     };
@@ -148,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const subtotal = checkoutItems
                 .filter(item => item.product)
                 .reduce((sum, item) => sum + parseFloat(item.product.price) * item.quantity, 0);
-            const taxes = subtotal * 0.10;
+            const taxes = 0; // No tax applicable
             const total = subtotal + taxes;
 
             // Store order data for payment proof page

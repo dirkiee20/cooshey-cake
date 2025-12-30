@@ -355,7 +355,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function displayTotals(totals) {
     document.getElementById('subtotalAmount').textContent = `₱${totals.subtotal.toFixed(2)}`;
-    document.getElementById('taxAmount').textContent = `₱${totals.tax.toFixed(2)}`;
     document.getElementById('totalAmount').textContent = `₱${totals.total.toFixed(2)}`;
   }
 });

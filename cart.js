@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const cartGrid = document.querySelector('.cart__grid');
     const subtotalEl = document.getElementById('subtotal');
-    const taxesEl = document.getElementById('taxes');
     const totalEl = document.getElementById('total');
     const selectAllCheckbox = document.getElementById('select-all-checkbox');
 
@@ -110,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const calculateSummary = (items) => {
         if (!items || items.length === 0) {
             subtotalEl.textContent = '₱0.00';
-            taxesEl.textContent = '₱0.00';
             totalEl.textContent = '₱0.00';
             return;
         }
@@ -118,11 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const subtotal = items
             .filter(item => item.product) // Ensure product exists before reducing
             .reduce((sum, item) => sum + parseFloat(item.product.price) * item.quantity, 0);
-        const taxes = subtotal * 0.10; // 10% tax
+        const taxes = 0; // No tax applicable
         const total = subtotal + taxes;
 
         subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
-        taxesEl.textContent = `₱${taxes.toFixed(2)}`;
         totalEl.textContent = `₱${total.toFixed(2)}`;
     };
 
